@@ -1,0 +1,63 @@
+body {
+    background-image: url('/images/background.png');
+    color: #def;
+    font-size: 14px;
+    font-family: 'Exo 2', sans-serif;
+}
+
+img.score {
+    box-shadow: 0 0 29px #555;
+}
+
+#footer > .container .text-muted {
+    margin: 20px 0;
+}
+
+#footer > .container {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+#error-page {
+    padding-top: 50px;
+}
+
+.form-control {
+    color: black;
+}
+
+.btn-primary {
+    background-color: #ff66aa;
+    border-color: #e85999;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open>.dropdown-toggle.btn-primary {
+    background-color: #ef569a;
+    border-color: #e85999;
+}
+
+.control-label {
+    color: #ff66aa;
+}
+
+legend {
+    color: white;
+}
+
+.disclaimer {
+    color: red;
+}
+
+#resultImg {
+    margin-bottom: 30px;
+}
+
+.sidenote {
+    margin: 10px;
+}
+
+.kek {
+    font-size: 22px;
+    font-weight: bold;
+    font-style: italic;
+}

@@ -1,0 +1,9 @@
+extends layout
+
+block content
+    .container#error-page
+        .panel.panel-danger
+            .panel-heading
+                h1.panel-title #{status} &ndash; #{message}
+            .panel-body
+                pre #{detailMessage}

@@ -1,0 +1,6 @@
+osu-api-key: API KEY HERE
+
+# to run on tcp port instead uncommend the following:
+#http:
+#    listen: 8080 # or any other port
+#    host: localhost # or 0.0.0.0 for any interface, or something specific

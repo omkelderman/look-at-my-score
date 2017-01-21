@@ -1,0 +1,13 @@
+http:
+    # eiher a tcp-port-nr to listen on or the value 'unix-socket' in which
+    # case it will use the value of path.socketFile to listen on
+    listen: unix-socket
+
+    # hostname/ip to listen on, '0.0.0.0' for all interfaces
+    # ignored if using 'unix-socket'
+    host: 0.0.0.0
+
+redis:
+    host: localhost
+    port: 6379
+    db: 1
