@@ -18,6 +18,9 @@ paths =
 
 USE_UNIX_SOCKET = config.get('http.listen') is 'unix-socket'
 
+# ensure data-dir exists
+fs.mkdirSync paths.dataDir if not fs.existsSync paths.dataDir
+
 # init the thing
 await OsuScoreBadgeCreator.init paths.inputDir, paths.dataDir, config.get('osu-api-key'), defer err
 return throw err if err
