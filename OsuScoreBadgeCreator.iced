@@ -21,6 +21,9 @@ HITS_DIR = null
 RANKINGS_DIR = null
 FONTS = {}
 
+#redis
+REDIS_CLIENT = null
+
 createInvalidInputError = (msg) ->
     err = new Error msg
     err.type = 'InvalidInput'
@@ -31,10 +34,11 @@ createMissingExternalDataError = (msg) ->
     err.type = 'MissingExternalData'
     return err
 
-initStuff = (src, dest, key, done) ->
+initStuff = (src, dest, key, redisClient, done) ->
     IMAGE_SOURCE_DIR = src
     IMAGE_DATA_DIR = dest
     API_KEY = key
+    REDIS_CLIENT = redisClient
 
     # some dirs
     MODS_DIR = path.resolve IMAGE_SOURCE_DIR, 'mods'
@@ -64,21 +68,57 @@ initStuff = (src, dest, key, done) ->
 
     return done()
 
-# TODO: need to handle possible null-result
-doApiRequestAndGetFirst = (endpoint, params, done) ->
+createCacheKeyFromObject = (obj) ->
+    Object.keys obj
+        .sort()
+        .map (key) -> key + '=' + obj[key]
+        .join '&'
+
+CACHE_TIMES =
+    get_beatmaps: 60*60*24 # 24 hour
+    get_scores:   30       # 30 sec
+
+generalStoreInCacheResultHandler = (err, result) ->
+    console.error 'welp, error while setting redis key', cacheKey if err or result isnt 'OK'
+
+storeInCache = (expire, key, value, done) ->
+    done = generalStoreInCacheResultHandler if not done
+    if expire and expire > 0 # discard negative and non-existing expire values
+        console.log 'SETEX', expire, key
+        REDIS_CLIENT.setex key, expire, value, done
+
+    # else dont store anything, its a cache, so dont want to have things that stay forever
+
+doApiRequest = (endpoint, params, done) ->
+    cacheKey = 'api:' + endpoint + ':' + createCacheKeyFromObject params
+    await REDIS_CLIENT.get cacheKey, defer err, cachedResult
+    return done err if err
+    return done null, JSON.parse cachedResult if cachedResult # yay cache exists
+
+    # cache didnt exist, lets get it
     url = 'https://osu.ppy.sh/api/' + endpoint
     params.k = API_KEY
     await request {url:url, qs:params, json:true, gzip:true}, defer err, resp, body
     return done err if err
     return done new Error 'no 200 response' if resp.statusCode != 200
-    done null, body[0]
+
+    # all gud, lets give it back right now, no need to wait for redis right
+    done null, body
+
+    # also store it in cache
+    storeInCache CACHE_TIMES[endpoint], cacheKey, JSON.stringify(body)
+
+
+doApiRequestAndGetFirst = (endpoint, params, done) ->
+    await doApiRequest endpoint, params, defer err, result
+    return done err if err
+    return done null, null if result is null #lelelelelel
+    done null, result[0]
 
 getBeatmap = (id, mode, done) ->
-    # TODO cache this crap, lets say a day
     doApiRequestAndGetFirst 'get_beatmaps', {b:id, m:mode, a:1}, done
 
 getScore = (beatmapId, mode, username, done) ->
-    # cache for like a minute? could be fancy if im gonna create a thing where im returning "theres more then one score, which one do you want?" and then if user requests again, score can be pulled from cache
     doApiRequestAndGetFirst 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
 
 zeroFillAndAddSpaces = (number, width) ->
@@ -338,11 +378,21 @@ createOsuScoreBadge = (gameMode, username, beatmapId, done) ->
     # hype, we're done, return the id
     return done null, id
 
-# TODO: cache this
 getGeneratedImagesAmount = (done) ->
+    await REDIS_CLIENT.get 'image-count', defer err, cachedResult
+    return done err if err
+    return done null, parseInt cachedResult if cachedResult # yay cache exists
+
+    # ok, lets query that crap
     await fs.readdir IMAGE_DATA_DIR, defer err, files
     return done err if err
-    done null, files.filter((n) -> n[-4..] is '.png').length
+    imageCount = files.filter((n) -> n[-4..] is '.png').length
+
+    # yay, report back
+    done null, imageCount
+
+    # and lets cache that shit for like 10 sec
+    storeInCache 10, 'image-count', imageCount
 
 module.exports =
     init: initStuff

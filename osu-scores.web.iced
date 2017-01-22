@@ -5,6 +5,7 @@ path = require 'path'
 logger = require 'morgan'
 killable = require 'killable'
 config = require 'config'
+redis = require 'redis'
 OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
 
 # constants
@@ -21,8 +22,20 @@ USE_UNIX_SOCKET = config.get('http.listen') is 'unix-socket'
 # ensure data-dir exists
 fs.mkdirSync paths.dataDir if not fs.existsSync paths.dataDir
 
+# redis
+redisConfig = config.get 'redis'
+redisSettings =
+    db: redisConfig.db
+    prefix: redisConfig.prefix+':'
+if redisConfig.path
+    redisSettings.path = redisConfig.path
+else
+    redisSettings.host = redisConfig.host
+    redisSettings.port = redisConfig.port
+redisClient = redis.createClient redisSettings
+
 # init the thing
-await OsuScoreBadgeCreator.init paths.inputDir, paths.dataDir, config.get('osu-api-key'), defer err
+await OsuScoreBadgeCreator.init paths.inputDir, paths.dataDir, config.get('osu-api-key'), redisClient, defer err
 return throw err if err
 
 # setup routes
@@ -93,6 +106,11 @@ if err
     console.error 'Error while closing HTTP server', err
 else
     console.log 'HTTP server has been closed'
+
+# close redis connection
+await
+    redisClient.once 'end', defer()
+    redisClient.quit()
 
 # THE END :D
 console.log "process with pid #{process.pid} ended gracefully :D"

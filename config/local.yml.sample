@@ -4,3 +4,8 @@ osu-api-key: API KEY HERE
 #http:
 #    listen: 8080 # or any other port
 #    host: localhost # or 0.0.0.0 for any interface, or something specific
+
+# alter redis connection settings if needed
+#redis:
+#    path: /var/run/redis/redis.sock # for example, listen on a unix socket
+#    db: 1 # or connect to different db
