@@ -10,23 +10,34 @@ var $sampleImg = $('#sample-img');
 var $contactMe = $('#contact-me');
 var $imageCount = $('#image-count');
 
-$(document).ready(function() {
-    $result.hide();
-
-    setInterval(updateImageCounter, 10000); // 10 sec
-});
+var imageCounterUpdaterIntervalId = 0;
 
 function incrementImageCounter() {
     $imageCount.text(+$imageCount.text()+1);
 }
 
+// Opera why???
+//if(typeof document.hasFocus === 'undefined') { document.hasFocus = function () { return document.visibilityState == 'visible'; }}
+
 function updateImageCounter() {
+    if(document.visibilityState !== 'visible') {
+        // not visible? no need to update
+        return;
+    }
     $.getJSON('/api/image-count', function(data) {
         if(data > +$imageCount.text()) {
             console.log('new image count', data);
             $imageCount.text(data);
         }
     });
+}
+
+function startImageCounterUpdate() {
+    imageCounterUpdaterIntervalId = setInterval(updateImageCounter, 10000); // 10 sec
+}
+
+function stopImageCounterUpdate() {
+    clearInterval(imageCounterUpdaterIntervalId);
 }
 
 $frm.submit(function(e) {
@@ -38,6 +49,7 @@ $frm.submit(function(e) {
     $resultImg.hide();
     $progressBar.show();
     $resultText.val('generating...');
+    stopImageCounterUpdate();
     $.ajax({
         type: $frm.attr('method'),
         url: $frm.attr('action'),
@@ -74,4 +86,12 @@ $goBackBtn.click(function(e) {
     e.preventDefault();
     $frm.slideDown()
     $result.slideUp();
+
+    startImageCounterUpdate();
+});
+
+$(document).ready(function() {
+    $result.hide();
+
+    startImageCounterUpdate();
 });
