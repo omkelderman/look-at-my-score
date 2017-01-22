@@ -8,10 +8,26 @@ var $resultText = $('#resultText');
 var $goBackBtn = $('#go-back-btn');
 var $sampleImg = $('#sample-img');
 var $contactMe = $('#contact-me');
+var $imageCount = $('#image-count');
 
 $(document).ready(function() {
     $result.hide();
+
+    setInterval(updateImageCounter, 10000); // 10 sec
 });
+
+function incrementImageCounter() {
+    $imageCount.text(+$imageCount.text()+1);
+}
+
+function updateImageCounter() {
+    $.getJSON('/api/image-count', function(data) {
+        if(data > +$imageCount.text()) {
+            console.log('new image count', data);
+            $imageCount.text(data);
+        }
+    });
+}
 
 $frm.submit(function(e) {
     e.preventDefault();
@@ -28,22 +44,23 @@ $frm.submit(function(e) {
         data: $frm.serialize(),
         success: function(data) {
             console.log('SUCCES!', data);
-	    if(data.result === 'image') {
+            if(data.result === 'image') {
                 var imgSrc = data.image.url;
                 $resultImg.attr('src', imgSrc).show();
                 $resultText.val(imgSrc);
-		$contactMe.attr('href', '/contact?img-id=' + data.image.id);
+                $contactMe.attr('href', '/contact?img-id=' + data.image.id);
+                incrementImageCounter();
             } else {
                 console.log('ERROR: unexpected result:', data.result);
-		$resultText.val('ERROR: If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
-		$contactMe.attr('href', '/contact?error=non-implemented-resulti&result=' + data.result);
+                $resultText.val('ERROR: If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
+                $contactMe.attr('href', '/contact?error=non-implemented-resulti&result=' + data.result);
             }
         },
         error: function(jqXHR, textStatus, errorThrown) {
             var error = jqXHR.responseJSON;
             console.error('ERROR', error)
             $resultText.val('ERROR, im sorry, something went wrong... The server reported: \'' + error.detailMessage + '\'');
-	    $contactMe.attr('href', '/contact?error=' + error.status);
+            $contactMe.attr('href', '/contact?error=' + error.status);
         },
         complete: function() {
             $progressBar.hide();
@@ -58,5 +75,3 @@ $goBackBtn.click(function(e) {
     $frm.slideDown()
     $result.slideUp();
 });
-
-console.log($goBackBtn);

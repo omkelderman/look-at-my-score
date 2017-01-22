@@ -40,6 +40,11 @@ router.post '/submit', (req, res, next) ->
     res.json
         result: 'WIP'
 
+router.get '/image-count', (req, res, next) ->
+    await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
+    return next err if err
+    res.json imagesAmount
+
 # not found? gen 404
 router.use (req, res, next) ->
     err = new Error 'Not Found'

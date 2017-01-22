@@ -1,5 +1,4 @@
 TODO
-- refresh image counter when pressing back (or even just whenever with ajax crap)
 - option to paste in beatmap-url
 - handle multiple scores per beatmap per user
 - prolly other shit
@@ -14,3 +13,4 @@ DONE
 - do caching shit (api and image counter)
 - contact page
   * link to contact page: get param with the img-id so if user reports problem I know what img-id it is
+- refresh image counter when pressing back (or even just whenever with ajax crap)
