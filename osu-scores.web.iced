@@ -41,7 +41,9 @@ app = express()
 app.enable 'trust proxy'
 app.set 'views', paths.viewsDir
 app.set 'view engine', 'pug'
+
 app.use express.static paths.staticDir
+app.use '/score', express.static paths.dataDir
 app.use logger 'dev'
 
 app.use bodyParser.urlencoded extended:true
@@ -77,11 +79,6 @@ if USE_UNIX_SOCKET
     fs.chmodSync paths.socket, '666'
 killable server
 console.log 'Server running on ', httpListen
-
-# await server = app.listen paths.socket, defer()
-# fs.chmodSync paths.socket, '666'
-# killable server
-# console.log 'server running on %s', paths.socket
 
 # on both SIGINT and SIGTERM start shutting down gracefully
 process.on 'SIGTERM', -> process.emit 'requestShutdown'
