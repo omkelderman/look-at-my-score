@@ -11,7 +11,7 @@ TODO
   * ip / user-agent / maybe other client-specific crap
   * the id
   * datetime
-
+- prolly not gonna need it for a loooong time, but you never know and better safe than sorry: API-rate-limiting
 
 DONE
 - add meta tags n stuff
