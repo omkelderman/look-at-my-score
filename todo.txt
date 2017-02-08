@@ -11,6 +11,7 @@ TODO
   * ip / user-agent / maybe other client-specific crap
   * the id
   * datetime
+- log and notify me (email?) when error on gen. Show in error message that I have been notified, maybe even with a "error code identifier thingy"
 - prolly not gonna need it for a loooong time, but you never know and better safe than sorry: API-rate-limiting
 
 DONE
