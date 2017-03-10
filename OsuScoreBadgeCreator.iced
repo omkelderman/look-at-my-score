@@ -209,7 +209,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         # draw hit-amounts
         .font(FONTS.ExtraBold)
         .fill(if blurColor then COLOR_BLUR else COLOR1)
-        .fontSize(32)
+        .fontSize(27)
     drawHitCounts img, mode, score
 
     acc = getAcc(mode, score)
@@ -262,6 +262,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
     if score.pp
         # force number
         ppNumber = +score.pp
+        ppNumber = 1234.56
 
         # calculate position
         ppValueX = 765
