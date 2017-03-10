@@ -40,6 +40,10 @@ img.score {
     color: #ff66aa;
 }
 
+fieldset {
+    margin-bottom: 10px;
+}
+
 legend {
     color: white;
 }

@@ -8,7 +8,14 @@ router.get '/test', (req, res, next) ->
         a: 'OK'
 
 router.post '/submit', (req, res, next) ->
-    await OsuScoreBadgeCreator.create req.body.mode, req.body.username, req.body.beatmap_id, defer err, id
+    console.log req.body
+    # return next new Error 'welp'
+    if not(req.body.beatmap_id and req.body.mode and (req.body.username or req.body.score))
+        return next
+            detail: 'Invalid request: missing parameters'
+            status: 400
+            message: 'Bad Request'
+    await OsuScoreBadgeCreator.create req.body.beatmap_id, req.body.mode, req.body.username || req.body.score, defer err, id, multiScoreResult
     if err
         console.error 'ERROR:', err
 
@@ -34,6 +41,13 @@ router.post '/submit', (req, res, next) ->
             image:
                 id: id
                 url: req.protocol + '://' + req.get('host') + '/score/' + id + '.png'
+        return
+
+    if multiScoreResult
+        console.log 'MULTIPLE SCORES'
+        res.json
+            result: 'multiple-scores'
+            data: multiScoreResult
         return
 
     # welp, not implemented yet

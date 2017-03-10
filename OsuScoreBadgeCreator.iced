@@ -6,6 +6,7 @@ uuidV4 = require 'uuid/v4'
 
 # constants
 MODS_AVAILABLE = []
+MOD_NAMES = {}
 IMAGE_SOURCE_DIR = null
 IMAGE_DATA_DIR = null
 API_KEY = null
@@ -53,7 +54,11 @@ initStuff = (src, dest, key, redisClient, done) ->
     for file in files
         result = MODFILE_REGEX.exec file
         if result
-            MODS_AVAILABLE.push parseInt result[1]
+            modInt = parseInt result[1]
+            await fs.readFile path.resolve(MODS_DIR, modInt+'.txt'), { encoding: 'utf8' }, defer err, modName
+            return done err if err
+            MODS_AVAILABLE.push modInt
+            MOD_NAMES[modInt] = modName.trim()
     MODS_AVAILABLE.sort (a,b) -> a-b
 
     # read fonts
@@ -76,7 +81,7 @@ createCacheKeyFromObject = (obj) ->
 
 CACHE_TIMES =
     get_beatmaps: 60*60*24 # 24 hour
-    get_scores:   30       # 30 sec
+    get_scores:   60*5     # 5 min
 
 generalStoreInCacheResultHandler = (err, result) ->
     console.error 'welp, error while setting redis key', cacheKey if err or result isnt 'OK'
@@ -100,7 +105,9 @@ doApiRequest = (endpoint, params, done) ->
     params.k = API_KEY
     await request {url:url, qs:params, json:true, gzip:true}, defer err, resp, body
     return done err if err
-    return done new Error 'no 200 response' if resp.statusCode != 200
+    if resp.statusCode != 200
+        console.error 'error api call to', url
+        return done new Error 'no 200 response'
 
     # all gud, lets give it back right now, no need to wait for redis right
     done null, body
@@ -118,8 +125,8 @@ doApiRequestAndGetFirst = (endpoint, params, done) ->
 getBeatmap = (id, mode, done) ->
     doApiRequestAndGetFirst 'get_beatmaps', {b:id, m:mode, a:1}, done
 
-getScore = (beatmapId, mode, username, done) ->
-    doApiRequestAndGetFirst 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
+getScores = (beatmapId, mode, username, done) ->
+    doApiRequest 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
 
 zeroFillAndAddSpaces = (number, width) ->
     number = number.toString()
@@ -212,7 +219,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         .fontSize(27)
     drawHitCounts img, mode, score
 
-    acc = getAcc(mode, score)
+    acc = getAcc mode, score
 
     # draw acc
     img.fontSize(48)
@@ -310,9 +317,21 @@ drawMod = (img, mod, i, totalSize) ->
         throw new Error 'Render error: too many mods to draw'
     img.draw "image Over #{x},195 0,0 #{MODS_DIR}/#{mod}.png"
 
+
+SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'rank', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
+isValidScoreObj = (scoreObj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of scoreObj
+
+toModsStr = (mods) ->
+    str = []
+    for mod in MODS_AVAILABLE
+        if (mods & mod) is mod
+            str.push '+' + MOD_NAMES[mod]
+    return str.join ' '
+
 # TODO: maybe an idea to allow arbitrary score/beatmap-objects to be passed in
 # that way i can build a more stateless api if Im gonna do the thing where yu have to redo thje request for chosing mods on score
-createOsuScoreBadge = (gameMode, username, beatmapId, done) ->
+# its either: (beatmap-id, game-mode, username) or (beatmap-id, game-mode, score-obj)
+createOsuScoreBadge = (beatmapId, gameMode, usernameOrScoreObj, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
     return done 'invalid game-mode' if isNaN gameMode or gameMode < 0 or gameMode > 3
@@ -323,9 +342,33 @@ createOsuScoreBadge = (gameMode, username, beatmapId, done) ->
     return done 'no beatmap found with that id' if not beatmap
 
     # get the score
-    await getScore beatmapId, gameMode, username, defer err, score
-    return done err if err
-    return done 'no score found for that user on that beatmap' if not score
+    if typeof usernameOrScoreObj is 'string'
+        # its a string, so its a username :D
+        username = usernameOrScoreObj
+        await getScores beatmapId, gameMode, username, defer err, scores
+        return done err if err
+        return done 'no score found for that user on that beatmap' if not scores or scores.length is 0
+
+        if scores.length > 1
+            # oh no, multiple scores, dunno what to do, ask user
+            return done null, null,
+                beatmap_id: beatmapId
+                mode: gameMode
+                scores: scores
+                texts: scores.map (score) -> "#{score.score} score | #{getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{toModsStr(score.enabled_mods)}"
+
+        score = scores[0]
+    else
+        # its not a string, so lets asume its an object
+
+        # check obj for required keys
+        return done 'invalid score object' if not isValidScoreObj usernameOrScoreObj
+
+        # yay, its ok :D
+        console.log 'custom score object ok'
+        score = usernameOrScoreObj
+
+    console.log score
 
     # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
     score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'

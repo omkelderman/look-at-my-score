@@ -63,11 +63,31 @@ block content
                 .row
                     .col-md-10
                         .input-group
-                            span.input-group-addon URL:
+                            span.input-group-addon Result:
                             input#resultText.form-control(type='text')
                     .col-md-2
                         button#go-back-btn.btn.btn-primary(type='button') Go Back
                 p.text-center.sidenote: small: em Anything not looking like it should? #[a#contact-me(href='/contact') Contact me!]
+                
+        fieldset#choose-score
+            legend Choose score
+            #choose-score-btn-group.btn-group-vertical(role='group')
+            //- form#choose-score-form.form-horizontal(method='post', action='/api/submit')
+            //-     .row
+            //-         .col-md-12
+            //-             #choose-score-btn-group.btn-group-vertical(data-toggle='buttons', role='group')
+            //-                 //- label.btn.btn-default
+            //-                 //-     input(type='radio', name='score', value=1, autocomplete='off')
+            //-                 //-     | A
+            //-                 //- label.btn.btn-default
+            //-                 //-     input(type='radio', name='score', value=2, autocomplete='off')
+            //-                 //-     | B
+            //-                 //- label.btn.btn-default
+            //-                 //-     input(type='radio', name='score', value=3, autocomplete='off')
+            //-                 //-     | C
+            //-     .row
+            //-         .col-md-12
+            //-             button#choose-score-submit-btn.btn.btn-primary(type='submit') Go!
 
 block append js
     script(type='text/javascript', src='/js/home.js')

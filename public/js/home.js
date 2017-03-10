@@ -9,6 +9,8 @@ var $goBackBtn = $('#go-back-btn');
 var $sampleImg = $('#sample-img');
 var $contactMe = $('#contact-me');
 var $imageCount = $('#image-count');
+var $chooseScoreBox = $('#choose-score');
+var $chooseScoreBtnGroup = $('#choose-score-btn-group');
 
 var imageCounterUpdaterIntervalId = 0;
 
@@ -40,20 +42,65 @@ function stopImageCounterUpdate() {
     clearInterval(imageCounterUpdaterIntervalId);
 }
 
+function fillScoresMenu(data) {
+    console.log('multiScoreResult', data);
+    $chooseScoreBtnGroup.empty();
+    $chooseScoreBtnGroup.data('beatmap-id', data.beatmap_id);
+    $chooseScoreBtnGroup.data('mode', data.mode);
+    for(var i=0; i < data.scores.length; ++i) {
+        $chooseScoreBtnGroup.append($('<div>')
+            .addClass('btn-group')
+            .append(
+                $('<button>')
+                    .data('score', data.scores[i])
+                    .attr('type', 'button')
+                    .addClass('btn btn-default')
+                    .click(handleChooseScore)
+                    //.text((+score.pp).toFixed(2) + ' pp')
+                    .text(data.texts[i])
+            )
+        );
+    }
+}
+
 $frm.submit(function(e) {
     e.preventDefault();
     $submitBtn.prop('disabled', true);
-    $frm.slideUp()
+    $frm.slideUp();
     $sampleImg.slideUp();
     $result.slideDown();
     $resultImg.hide();
     $progressBar.show();
-    $resultText.val('generating...');
+    $resultText.val('fetching data and generating image...');
     stopImageCounterUpdate();
+    doThaThing($frm.serialize());
+});
+
+function handleChooseScore(e) {
+    e.preventDefault();
+    var $this = $(this);
+    $this.parent().parent().find('button').prop('disabled', true);
+
+    var data = {
+        beatmap_id: $chooseScoreBtnGroup.data('beatmap-id'),
+        mode: $chooseScoreBtnGroup.data('mode'),
+        score: $this.data('score')
+    };
+    console.log('requesting score', data);
+
+    // do request with custom score
+    $chooseScoreBox.slideUp();
+    $progressBar.show();
+    $resultText.val('fetching data and generating image...');
+    $submitBtn.prop('disabled', true);
+    doThaThing(data);
+}
+
+function doThaThing(data) {
     $.ajax({
         type: $frm.attr('method'),
         url: $frm.attr('action'),
-        data: $frm.serialize(),
+        data: data,
         success: function(data) {
             console.log('SUCCES!', data);
             if(data.result === 'image') {
@@ -62,6 +109,11 @@ $frm.submit(function(e) {
                 $resultText.val(imgSrc);
                 $contactMe.attr('href', '/contact?img-id=' + data.image.id);
                 incrementImageCounter();
+            } else if (data.result === 'multiple-scores') {
+                console.log('welp, multiple scores');
+                $resultText.val('There are multiple scores, please choose one!');
+                fillScoresMenu(data.data);
+                $chooseScoreBox.slideDown();
             } else {
                 console.log('ERROR: unexpected result:', data.result);
                 $resultText.val('ERROR: If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
@@ -71,15 +123,20 @@ $frm.submit(function(e) {
         error: function(jqXHR, textStatus, errorThrown) {
             var error = jqXHR.responseJSON;
             console.error('ERROR', error)
-            $resultText.val('ERROR, im sorry, something went wrong... The server reported: \'' + error.detailMessage + '\'');
-            $contactMe.attr('href', '/contact?error=' + error.status);
+            if(error) {
+                $resultText.val('ERROR, im sorry, something went wrong... The server reported: \'' + error.detailMessage + '\'');
+                $contactMe.attr('href', '/contact?error=' + error.status);
+            } else {
+                $resultText.val('ERROR, im sorry, something went wrong...');
+                $contactMe.attr('href', '/contact?error=unknown');
+            }
         },
         complete: function() {
             $progressBar.hide();
             $submitBtn.prop('disabled', false);
         },
     });
-});
+}
 
 $goBackBtn.click(function(e) {
     console.log('hahaha')
@@ -92,6 +149,7 @@ $goBackBtn.click(function(e) {
 
 $(document).ready(function() {
     $result.hide();
+    $chooseScoreBox.hide();
 
     startImageCounterUpdate();
 });
