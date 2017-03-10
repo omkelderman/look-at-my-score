@@ -262,7 +262,6 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
     if score.pp
         # force number
         ppNumber = +score.pp
-        ppNumber = 1234.56
 
         # calculate position
         ppValueX = 765
