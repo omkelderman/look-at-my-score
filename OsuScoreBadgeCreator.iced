@@ -212,6 +212,8 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         .fontSize(32)
     drawHitCounts img, mode, score
 
+    acc = getAcc(mode, score)
+
     # draw acc
     img.fontSize(48)
         .drawText(461, 136, zeroFillAndAddSpaces(score.score, 8))
@@ -220,7 +222,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
 
         # draw acc
         .fontSize(60)
-        .drawText(551, 201, getAcc(mode, score) + '%%')
+        .drawText(551, 201, acc + '%%')
 
     # beatmap.max_combo could be "null", in that case, dont draw it
     # and draw the actual combo a bit lower
@@ -270,6 +272,9 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
             ppValueX += 15
         if ppNumber < 10
             ppValueX += 12
+
+        if acc is '100.00' # SS
+            ppTextX += 10
 
         # draw logic
         img.font FONTS.ExtraBold
