@@ -10,7 +10,7 @@ router.get '/test', (req, res, next) ->
 router.post '/submit', (req, res, next) ->
     console.log req.body
     # return next new Error 'welp'
-    if not(req.body.beatmap_id and req.body.mode and (req.body.username or req.body.score))
+    if not(req.body.beatmap_id? and req.body.mode? and (req.body.username? or req.body.score?))
         return next
             detail: 'Invalid request: missing parameters'
             status: 400
