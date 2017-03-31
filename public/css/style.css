@@ -26,7 +26,22 @@ img.score {
     color: black;
 }
 
-.btn-primary {
+.btn-primary,
+.btn-primary.disabled,
+.btn-primary[disabled],
+fieldset[disabled] .btn-primary,
+.btn-primary.disabled:hover,
+.btn-primary[disabled]:hover,
+fieldset[disabled] .btn-primary:hover,
+.btn-primary.disabled:focus,
+.btn-primary[disabled]:focus,
+fieldset[disabled] .btn-primary:focus,
+.btn-primary.disabled:active,
+.btn-primary[disabled]:active,
+fieldset[disabled] .btn-primary:active,
+.btn-primary.disabled.active,
+.btn-primary[disabled].active,
+fieldset[disabled] .btn-primary.active {
     background-color: #ff66aa;
     border-color: #e85999;
 }
@@ -40,12 +55,14 @@ img.score {
     color: #ff66aa;
 }
 
-fieldset {
-    margin-bottom: 10px;
+h2 {
+    border-bottom-style: dashed;
+    border-bottom-width: 1px;
 }
 
 legend {
     color: white;
+    border-style: dotted;
 }
 
 .disclaimer {

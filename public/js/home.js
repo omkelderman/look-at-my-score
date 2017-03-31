@@ -1,9 +1,38 @@
+(function($) {
+
+    $.fn.allInputUpdate = function(eventHandler) {
+        var elem = $(this);
+
+        // Save current value of element
+        elem.data('oldVal', elem.val());
+
+        // Look for changes in the value
+        elem.bind('propertychange change keyup input paste customset', function(event){
+            // If value has not changed...
+            if (elem.data('oldVal') === elem.val()) return;
+
+            // Value has changed, store updated value
+            elem.data('oldVal', elem.val());
+
+            // handle event
+            if($.isFunction(eventHandler)) eventHandler(event);
+        });
+
+        return elem;
+    };
+
+    $.fn.customSet = function(val) {
+        return $(this).val(val).trigger('customset');
+    };
+
+}(jQuery));
+
+
 var $frm = $('#form');
 var $submitBtn = $('#submit-btn');
 var $result = $('#result');
 var $resultImg = $('#resultImg');
 var $progressBar = $('#progressBar');
-var $resultText = $('#resultText');
 var $resultText = $('#resultText');
 var $goBackBtn = $('#go-back-btn');
 var $sampleImg = $('#sample-img');
@@ -11,15 +40,20 @@ var $contactMe = $('#contact-me');
 var $imageCount = $('#image-count');
 var $chooseScoreBox = $('#choose-score');
 var $chooseScoreBtnGroup = $('#choose-score-btn-group');
+var $manualBeatmapSelect = $('#manual-beatmap-select');
+var $autoBeatmapSelect = $('#auto-beatmap-select');
+
+// inputs
+var $inputUsername = $('#username');
+var $inputBeatmapUrl = $('#beatmap_url');
+var $inputBeatmapId = $('#beatmap_id');
+var $inputMode = $('#mode');
 
 var imageCounterUpdaterIntervalId = 0;
 
 function incrementImageCounter() {
     $imageCount.text(+$imageCount.text()+1);
 }
-
-// Opera why???
-//if(typeof document.hasFocus === 'undefined') { document.hasFocus = function () { return document.visibilityState == 'visible'; }}
 
 function updateImageCounter() {
     if(document.visibilityState !== 'visible') {
@@ -143,13 +177,122 @@ $goBackBtn.click(function(e) {
     e.preventDefault();
     $frm.slideDown()
     $result.slideUp();
+    $chooseScoreBox.slideUp();
 
     startImageCounterUpdate();
+});
+
+function validateInput(e) {
+    e.preventDefault();
+    var inputIsValid = true;
+
+    if($inputUsername.val().length == 0) {
+        // username cannot be empty
+        inputIsValid = false;
+    }
+
+    if(!/^[0-9]+$/.test($inputBeatmapId.val())) {
+        // beatmap id can only contain numbers
+        inputIsValid = false;
+    }
+
+    if($inputMode.val() < 0 || $inputMode.val() > 4) {
+        // invalid gamemode
+        inputIsValid = false;
+    }
+
+    $submitBtn.prop('disabled', !inputIsValid);
+}
+
+// listen to a shitton of events to make sure we catch every change as early as possible
+$inputUsername.allInputUpdate(validateInput);
+$inputBeatmapId.allInputUpdate(validateInput);
+$inputMode.allInputUpdate(validateInput);
+$inputBeatmapUrl.allInputUpdate(function(e) {
+    var value = parseBeatmapUrl($inputBeatmapUrl.val());
+    if(value.isValid) {
+        if(value.s) {
+            alert('WIP: handle /s/-urls');
+            // TODO: handle /s/-urls
+            // reset for now
+            $inputBeatmapId.customSet('');
+            $inputMode.customSet('0');
+        } else {
+            // hype, URL is parsed!
+            console.log('valid input:', value);
+            $inputBeatmapId.customSet(value.b);
+            $inputMode.customSet(value.m);
+        }
+    } else {
+        // TODO: show error
+        // set back to default values
+        $inputBeatmapId.customSet('');
+        $inputMode.customSet('0');
+    }
+});
+
+function parseBeatmapUrl(string) {
+    if(typeof string !== 'string' || string.length === 0) {
+        // no string, or empty string
+        return {
+            isValid: false,
+            error: 'empty'
+        };
+    }
+
+    // [http[s]://]osu.ppy.sh/[b|s]/123456[[?|&]m=0]
+    var oldSite1Result = /^(?:https?\:\/\/)?osu\.ppy\.sh\/(b|s)\/([0-9]+)(?:(?:\?|&)m=([0-3]))?$/.exec(string);
+    if(oldSite1Result) {
+        var obj = {
+            isValid: true,
+            m: oldSite1Result[3] || '0'
+        };
+        obj[oldSite1Result[1]] = oldSite1Result[2];
+        return obj;
+    }
+
+    // [http[s]://]osu.ppy.sh/p/beatmap?b=123456[?m=0]
+    var oldSite2Result = /^(?:https?\:\/\/)?osu\.ppy\.sh\/p\/beatmap\?b=([0-9]+)(?:&m=([0-3]))?$/.exec(string);
+    if(oldSite2Result) {
+        return {
+            isValid: true,
+            b: oldSite2Result[1],
+            m: oldSite2Result[2] || '0'
+        };
+    }
+
+    // [http[s]://]new.ppy.sh/beatmapsets/123456#[osu|taiko|fruits|mania]/123456
+    var newSiteResult = /^(?:https?\:\/\/)?new\.ppy\.sh\/beatmapsets\/[0-9]+#(osu|taiko|fruits|mania)\/([0-9]+)$/.exec(string);
+    if(newSiteResult) {
+        return {
+            isValid: true,
+            b: newSiteResult[2],
+            m: ['osu', 'taiko', 'fruits', 'mania'].indexOf(newSiteResult[1])
+        }
+    }
+
+    return {
+        isValid: false,
+        error: 'invalid'
+    };
+}
+
+$('.toggle-beatmap-selection-style').click(function(e){
+    e.preventDefault();
+    $manualBeatmapSelect.slideToggle();
+    $autoBeatmapSelect.slideToggle();
+});
+
+$('#sample-img a.dismiss').click(function(e){
+    e.preventDefault();
+    $sampleImg.slideUp();
 });
 
 $(document).ready(function() {
     $result.hide();
     $chooseScoreBox.hide();
+    $manualBeatmapSelect.hide();
+    $submitBtn.prop('disabled', true);
 
     startImageCounterUpdate();
 });
