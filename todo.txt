@@ -1,5 +1,4 @@
 TODO
-- option to paste in beatmap-uri
 - ajax-load beatmap-info and show beatmap-info on page
   * yay its now in cache, image gen will be faster :D xD
   * could do a thing where if you paste in a set-id, you get a "popup" asking wich diff?
@@ -23,3 +22,4 @@ DONE
   * link to contact page: get param with the img-id so if user reports problem I know what img-id it is
 - refresh image counter when pressing back (or even just whenever with ajax crap)
 - handle multiple scores per beatmap per user
+- option to paste in beatmap-uri
