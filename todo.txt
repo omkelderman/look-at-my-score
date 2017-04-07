@@ -14,6 +14,7 @@ TODO
 - add a "complain/feedback" page: when image has been generated without error: add link to said page. On that page people can leave complaints/feedback about the image, e.g. stuff doesnt fit, something doesnt look right, data is not correct, whatever
   * on submit notify me (email?) with notification about that thing
 - prolly not gonna need it for a loooong time, but you never know and better safe than sorry: API-rate-limiting
+- show "latest generated picture" on homepage (as sample?) maybe???
 
 DONE
 - add meta tags n stuff
