@@ -3,43 +3,28 @@ request = require 'request'
 fs = require 'fs'
 path = require 'path'
 uuidV4 = require 'uuid/v4'
+RedisCache = require './RedisCache'
 
 # constants
-MODS_AVAILABLE = []
-MOD_NAMES = {}
-IMAGE_SOURCE_DIR = null
-IMAGE_DATA_DIR = null
-API_KEY = null
-
 COLOR1 = '#eee'
 COLOR2 = '#f6a'
 COLOR3 = '#EA609B'
 COLOR_BLUR = '#000'
 COLOR3_STROKE = '#fff'
 
+# runtime "constants"
+MODS_AVAILABLE = []
+MOD_NAMES = {}
+IMAGE_SOURCE_DIR = null
+IMAGE_DATA_DIR = null
 MODS_DIR = null
 HITS_DIR = null
 RANKINGS_DIR = null
 FONTS = {}
 
-#redis
-REDIS_CLIENT = null
-
-createInvalidInputError = (msg) ->
-    err = new Error msg
-    err.type = 'InvalidInput'
-    return err
-
-createMissingExternalDataError = (msg) ->
-    err = new Error msg
-    err.type = 'MissingExternalData'
-    return err
-
-initStuff = (src, dest, key, redisClient, done) ->
+initStuff = (src, dest, done) ->
     IMAGE_SOURCE_DIR = src
     IMAGE_DATA_DIR = dest
-    API_KEY = key
-    REDIS_CLIENT = redisClient
 
     # some dirs
     MODS_DIR = path.resolve IMAGE_SOURCE_DIR, 'mods'
@@ -73,60 +58,6 @@ initStuff = (src, dest, key, redisClient, done) ->
 
     return done()
 
-createCacheKeyFromObject = (obj) ->
-    Object.keys obj
-        .sort()
-        .map (key) -> key + '=' + obj[key]
-        .join '&'
-
-CACHE_TIMES =
-    get_beatmaps: 60*60*24 # 24 hour
-    get_scores:   60*5     # 5 min
-
-generalStoreInCacheResultHandler = (err, result) ->
-    console.error 'welp, error while setting redis key', cacheKey if err or result isnt 'OK'
-
-storeInCache = (expire, key, value, done) ->
-    done = generalStoreInCacheResultHandler if not done
-    if expire and expire > 0 # discard negative and non-existing expire values
-        console.log 'SETEX', expire, key
-        REDIS_CLIENT.setex key, expire, value, done
-
-    # else dont store anything, its a cache, so dont want to have things that stay forever
-
-doApiRequest = (endpoint, params, done) ->
-    cacheKey = 'api:' + endpoint + ':' + createCacheKeyFromObject params
-    await REDIS_CLIENT.get cacheKey, defer err, cachedResult
-    return done err if err
-    return done null, JSON.parse cachedResult if cachedResult # yay cache exists
-
-    # cache didnt exist, lets get it
-    url = 'https://osu.ppy.sh/api/' + endpoint
-    params.k = API_KEY
-    await request {url:url, qs:params, json:true, gzip:true}, defer err, resp, body
-    return done err if err
-    if resp.statusCode != 200
-        console.error 'error api call to', url
-        return done new Error 'no 200 response'
-
-    # all gud, lets give it back right now, no need to wait for redis right
-    done null, body
-
-    # also store it in cache
-    storeInCache CACHE_TIMES[endpoint], cacheKey, JSON.stringify(body)
-
-
-doApiRequestAndGetFirst = (endpoint, params, done) ->
-    await doApiRequest endpoint, params, defer err, result
-    return done err if err
-    return done null, null if result is null #lelelelelel
-    done null, result[0]
-
-getBeatmap = (id, mode, done) ->
-    doApiRequestAndGetFirst 'get_beatmaps', {b:id, m:mode, a:1}, done
-
-getScores = (beatmapId, mode, username, done) ->
-    doApiRequest 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
 
 zeroFillAndAddSpaces = (number, width) ->
     number = number.toString()
@@ -319,7 +250,11 @@ drawMod = (img, mod, i, totalSize) ->
 
 
 SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'rank', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
-isValidScoreObj = (scoreObj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of scoreObj
+isValidScoreObj = (obj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of obj
+
+# TODO: do this list
+BEATMAP_OBJ_REQ_PROPS = ['beatmapset_id', 'max_combo', 'title', 'artist', 'creator', 'version']
+isValidBeatmapObj = (obj) -> BEATMAP_OBJ_REQ_PROPS.every (x) -> x of obj
 
 toModsStr = (mods) ->
     str = []
@@ -328,47 +263,15 @@ toModsStr = (mods) ->
             str.push '+' + MOD_NAMES[mod]
     return str.join ' '
 
-# TODO: maybe an idea to allow arbitrary score/beatmap-objects to be passed in
-# that way i can build a more stateless api if Im gonna do the thing where yu have to redo thje request for chosing mods on score
-# its either: (beatmap-id, game-mode, username) or (beatmap-id, game-mode, score-obj)
-createOsuScoreBadge = (beatmapId, gameMode, usernameOrScoreObj, done) ->
+createOsuScoreBadge = (beatmap, gameMode, score, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
-    return done 'invalid game-mode' if isNaN gameMode or gameMode < 0 or gameMode > 3
 
-    # get the beatmap
-    await getBeatmap beatmapId, gameMode, defer err, beatmap
-    return done err if err
-    return done 'no beatmap found with that id' if not beatmap
-
-    # get the score
-    if typeof usernameOrScoreObj is 'string'
-        # its a string, so its a username :D
-        username = usernameOrScoreObj
-        await getScores beatmapId, gameMode, username, defer err, scores
-        return done err if err
-        return done 'no score found for that user on that beatmap' if not scores or scores.length is 0
-
-        if scores.length > 1
-            # oh no, multiple scores, dunno what to do, ask user
-            return done null, null,
-                beatmap_id: beatmapId
-                mode: gameMode
-                scores: scores
-                texts: scores.map (score) -> "#{score.score} score | #{getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{toModsStr(score.enabled_mods)}"
-
-        score = scores[0]
-    else
-        # its not a string, so lets asume its an object
-
-        # check obj for required keys
-        return done 'invalid score object' if not isValidScoreObj usernameOrScoreObj
-
-        # yay, its ok :D
-        console.log 'custom score object ok'
-        score = usernameOrScoreObj
-
-    console.log score
+    # validate stuff
+    # TODO better done thing
+    return done message:'invalid game-mode' if isNaN gameMode or gameMode < 0 or gameMode > 3
+    return done message:'invalid score object' if not isValidScoreObj score
+    return done message:'invalid beatmap object' if not isValidBeatmapObj beatmap
 
     # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
     score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
@@ -427,7 +330,7 @@ createOsuScoreBadge = (beatmapId, gameMode, usernameOrScoreObj, done) ->
     return done null, id
 
 getGeneratedImagesAmount = (done) ->
-    await REDIS_CLIENT.get 'image-count', defer err, cachedResult
+    await RedisCache.get 'image-count', defer err, cachedResult
     return done err if err
     return done null, parseInt cachedResult if cachedResult # yay cache exists
 
@@ -440,9 +343,11 @@ getGeneratedImagesAmount = (done) ->
     done null, imageCount
 
     # and lets cache that shit for like 10 sec
-    storeInCache 10, 'image-count', imageCount
+    RedisCache.storeInCache 10, 'image-count', imageCount
 
 module.exports =
     init: initStuff
     create: createOsuScoreBadge
     getGeneratedImagesAmount: getGeneratedImagesAmount
+    toModsStr: toModsStr
+    getAcc: getAcc

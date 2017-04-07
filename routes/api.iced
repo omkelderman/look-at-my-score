@@ -1,5 +1,6 @@
 express = require 'express'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
+OsuApi = require '../OsuApi'
 
 router = express.Router()
 
@@ -8,51 +9,65 @@ router.get '/test', (req, res, next) ->
         a: 'OK'
 
 router.post '/submit', (req, res, next) ->
-    console.log req.body
-    # return next new Error 'welp'
-    if not(req.body.beatmap_id? and req.body.mode? and (req.body.username? or req.body.score?))
+    # required:
+    #  - mode
+    #  - beatmap_id  OR   beatmap
+    #  - username    OR   score
+    if not((req.body.beatmap_id? or req.body.beatmap?) and req.body.mode? and (req.body.username? or req.body.score?))
         return next
             detail: 'Invalid request: missing parameters'
             status: 400
             message: 'Bad Request'
-    await OsuScoreBadgeCreator.create req.body.beatmap_id, req.body.mode, req.body.username || req.body.score, defer err, id, multiScoreResult
-    if err
-        console.error 'ERROR:', err
 
-        # # change to http-error
-        if typeof err is 'string'
-            err = detail: err
-            if err.detail[0] is 'i'
-                err.status = 400
-                err.message = 'Bad Request'
-            else if err.detail[0] is 'n'
-                err.status = 404
-                err.message = 'Not Found'
-            else
-                err.status = 500
-                err.message = 'Internal Server Error'
+    gameMode = req.body.mode
 
-        return next err
+    # get beatmap
+    if req.body.beatmap_id?
+        # get beatmap
+        await OsuApi.getBeatmap req.body.beatmap_id, gameMode, defer err, beatmap
+        return next err if err
+        if not beatmap
+            return next
+                detail: 'no beatmap found with that id'
+                status: 404
+                message: 'Not Found'
+    else
+        beatmap = req.body.beatmap
 
-    if id
-        console.log 'CREATED:', id
-        res.json
-            result: 'image'
-            image:
-                id: id
-                url: req.protocol + '://' + req.get('host') + '/score/' + id + '.png'
-        return
+    # get score
+    if req.body.username?
+        await OsuApi.getScores beatmap.beatmap_id, gameMode, req.body.username, defer err, scores
+        return next err if err
+        if not scores
+            return next
+                detail: 'no score found for that user on that beatmap'
+                status: 404
+                message: 'Not Found'
 
-    if multiScoreResult
-        console.log 'MULTIPLE SCORES'
-        res.json
-            result: 'multiple-scores'
-            data: multiScoreResult
-        return
+        if scores.length > 1
+            # oh no, multiple scores, dunno what to do, ask user
+            console.log 'MULTIPLE SCORES'
+            return res.json
+                result: 'multiple-scores'
+                data:
+                    beatmap_id: beatmap.beatmap_id
+                    mode: gameMode
+                    scores: scores
+                    texts: scores.map (score) -> "#{score.score} score | #{OsuScoreBadgeCreator.getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{OsuScoreBadgeCreator.toModsStr(score.enabled_mods)}"
 
-    # welp, not implemented yet
+        score = scores[0]
+    else
+        score = req.body.score
+
+    # create the thing :D
+    await OsuScoreBadgeCreator.create beatmap, gameMode, score, defer err, imageId
+    return next err if err
+    console.log 'CREATED:', imageId
     res.json
-        result: 'WIP'
+        result: 'image'
+        image:
+            id: imageId
+            url: "#{req.protocol}://#{req.get('host')}/score/#{imageId}.png"
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
