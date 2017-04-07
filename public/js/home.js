@@ -1,3 +1,6 @@
+///////////////////////////////////
+// custom jQeury extenstion shit //
+///////////////////////////////////
 (function($) {
 
     $.fn.allInputUpdate = function(eventHandler) {
@@ -21,8 +24,13 @@
         return elem;
     };
 
-    $.fn.customSet = function(val) {
-        return $(this).val(val).trigger('customset');
+    $.fn.customSet = function(val, dontTiggerEvent) {
+        if(dontTiggerEvent) {
+            // dont trigger set event, but do update the 'oldVal' value
+            return $(this).val(val).data('oldVal', val);
+        } else {
+            return $(this).val(val).trigger('customset');
+        }
     };
 
 }(jQuery));
@@ -90,7 +98,6 @@ function fillScoresMenu(data) {
                     .attr('type', 'button')
                     .addClass('btn btn-default')
                     .click(handleChooseScore)
-                    //.text((+score.pp).toFixed(2) + ' pp')
                     .text(data.texts[i])
             )
         );
@@ -183,20 +190,35 @@ $goBackBtn.click(function(e) {
 });
 
 function validateInput(e) {
-    e.preventDefault();
     var inputIsValid = true;
 
-    if($inputUsername.val().length == 0) {
+    $inputUsernameFormGroup = $inputUsername.parent().parent();
+    $inputBeatmapIdFormGroup = $inputBeatmapId.parent().parent();
+    $inputModeFormGroup = $inputMode.parent().parent();
+
+    var usernameInvalid = $inputUsername.val().length == 0;
+    if(e.currentTarget == $inputUsername[0]) {
+        $inputUsernameFormGroup.toggleClass('has-error', usernameInvalid);
+    }
+    if(usernameInvalid) {
         // username cannot be empty
         inputIsValid = false;
     }
 
-    if(!/^[0-9]+$/.test($inputBeatmapId.val())) {
+    var beatmapIdInvalid = !/^[0-9]+$/.test($inputBeatmapId.val())
+    if(e.currentTarget == $inputBeatmapId[0]) {
+        $inputBeatmapIdFormGroup.toggleClass('has-error', beatmapIdInvalid);
+    }
+    if(beatmapIdInvalid) {
         // beatmap id can only contain numbers
         inputIsValid = false;
     }
 
-    if($inputMode.val() < 0 || $inputMode.val() > 4) {
+    var modeInvalid = $inputMode.val() < 0 || $inputMode.val() > 4
+    if(e.currentTarget == $inputMode[0]) {
+        $inputModeFormGroup.toggleClass('has-error', modeInvalid);
+    }
+    if(modeInvalid) {
         // invalid gamemode
         inputIsValid = false;
     }
@@ -204,31 +226,46 @@ function validateInput(e) {
     $submitBtn.prop('disabled', !inputIsValid);
 }
 
+function clearUrlInputAndValidateInput(e) {
+    if($inputBeatmapUrl.is(':hidden')) {
+        // we're doing manual input, clear the url input
+        $inputBeatmapUrl.customSet('', true);
+    }
+
+    // and validate ofc
+    validateInput(e);
+}
+
 // listen to a shitton of events to make sure we catch every change as early as possible
 $inputUsername.allInputUpdate(validateInput);
-$inputBeatmapId.allInputUpdate(validateInput);
-$inputMode.allInputUpdate(validateInput);
+$inputBeatmapId.allInputUpdate(clearUrlInputAndValidateInput);
+$inputMode.allInputUpdate(clearUrlInputAndValidateInput);
 $inputBeatmapUrl.allInputUpdate(function(e) {
     var value = parseBeatmapUrl($inputBeatmapUrl.val());
+    $inputBeatmapUrl.parent().parent().toggleClass('has-error', !value.isValid);
     if(value.isValid) {
         if(value.s) {
-            alert('WIP: handle /s/-urls');
             // TODO: handle /s/-urls
-            // reset for now
-            $inputBeatmapId.customSet('');
-            $inputMode.customSet('0');
+            console.log('s-url', value);
+            // make it appear as error for now
+            $inputBeatmapUrl.parent().parent().toggleClass('has-error', true);
         } else {
             // hype, URL is parsed!
             console.log('valid input:', value);
             $inputBeatmapId.customSet(value.b);
             $inputMode.customSet(value.m);
+
+            // done :D
+            return;
         }
     } else {
-        // TODO: show error
-        // set back to default values
-        $inputBeatmapId.customSet('');
-        $inputMode.customSet('0');
+        console.log('error', value);
     }
+
+    // if we reach this, means we dont have a final value
+    // set back to default values
+    $inputBeatmapId.customSet('');
+    $inputMode.customSet('0');
 });
 
 function parseBeatmapUrl(string) {
