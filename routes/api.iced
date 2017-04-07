@@ -38,7 +38,7 @@ router.post '/submit', (req, res, next) ->
     if req.body.username?
         await OsuApi.getScores beatmap.beatmap_id, gameMode, req.body.username, defer err, scores
         return next err if err
-        if not scores
+        if not scores or scores.length is 0
             return next
                 detail: 'no score found for that user on that beatmap'
                 status: 404
