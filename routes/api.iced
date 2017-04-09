@@ -2,6 +2,9 @@ express = require 'express'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
 OsuApi = require '../OsuApi'
 
+notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
+badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
+
 router = express.Router()
 
 router.get '/test', (req, res, next) ->
@@ -14,10 +17,7 @@ router.post '/submit', (req, res, next) ->
     #  - beatmap_id  OR   beatmap
     #  - username    OR   score
     if not((req.body.beatmap_id? or req.body.beatmap?) and req.body.mode? and (req.body.username? or req.body.score?))
-        return next
-            detail: 'Invalid request: missing parameters'
-            status: 400
-            message: 'Bad Request'
+        return next badRequest 'Invalid request: missing parameters'
 
     gameMode = req.body.mode
 
@@ -27,11 +27,9 @@ router.post '/submit', (req, res, next) ->
         await OsuApi.getBeatmap req.body.beatmap_id, gameMode, defer err, beatmap
         return next err if err
         if not beatmap
-            return next
-                detail: 'no beatmap found with that id'
-                status: 404
-                message: 'Not Found'
+            return next notFound 'no beatmap found with that id'
     else
+        return next badRequest 'beatmap object not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.score
         beatmap = req.body.beatmap
 
     # get score
@@ -39,10 +37,7 @@ router.post '/submit', (req, res, next) ->
         await OsuApi.getScores beatmap.beatmap_id, gameMode, req.body.username, defer err, scores
         return next err if err
         if not scores or scores.length is 0
-            return next
-                detail: 'no score found for that user on that beatmap'
-                status: 404
-                message: 'Not Found'
+            return next notFound 'no score found for that user on that beatmap'
 
         if scores.length > 1
             # oh no, multiple scores, dunno what to do, ask user
@@ -57,6 +52,7 @@ router.post '/submit', (req, res, next) ->
 
         score = scores[0]
     else
+        return next badRequest 'score object not valid' if not OsuScoreBadgeCreator.isValidScoreObj req.body.score
         score = req.body.score
 
     # create the thing :D

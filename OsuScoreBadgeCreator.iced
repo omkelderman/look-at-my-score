@@ -262,15 +262,12 @@ toModsStr = (mods) ->
             str.push '+' + MOD_NAMES[mod]
     return str.join ' '
 
+# input objects must be "correct"
+# check with isValidScoreObj/isValidBeatmapObj
+# otherwise shit will fail
 createOsuScoreBadge = (beatmap, gameMode, score, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
-
-    # validate stuff
-    # TODO better done thing
-    return done message:'invalid game-mode' if isNaN gameMode or gameMode < 0 or gameMode > 3
-    return done message:'invalid score object' if not isValidScoreObj score
-    return done message:'invalid beatmap object' if not isValidBeatmapObj beatmap
 
     # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
     score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
@@ -350,3 +347,5 @@ module.exports =
     getGeneratedImagesAmount: getGeneratedImagesAmount
     toModsStr: toModsStr
     getAcc: getAcc
+    isValidScoreObj: isValidScoreObj
+    isValidBeatmapObj: isValidBeatmapObj
