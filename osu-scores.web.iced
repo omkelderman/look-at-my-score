@@ -9,10 +9,12 @@ redis = require 'redis'
 OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
 OsuApi = require './OsuApi'
 RedisCache = require './RedisCache'
+CoverCache = require './CoverCache'
 
 # constants
 paths =
     dataDir : path.resolve 'data'
+    coverCacheDir : path.resolve 'coverCache'
     inputDir : path.resolve 'input'
     socket : path.resolve '../http.sock'
     routesDir : path.resolve 'routes'
@@ -21,8 +23,9 @@ paths =
 
 USE_UNIX_SOCKET = config.get('http.listen') is 'unix-socket'
 
-# ensure data-dir exists
+# ensure data-dir/coverCache-dir exists
 fs.mkdirSync paths.dataDir if not fs.existsSync paths.dataDir
+fs.mkdirSync paths.coverCacheDir if not fs.existsSync paths.coverCacheDir
 
 # redis
 redisConfig = config.get 'redis'
@@ -38,6 +41,7 @@ redisClient = redis.createClient redisSettings
 
 # init the things
 RedisCache.init redisClient
+CoverCache.init paths.coverCacheDir
 await OsuScoreBadgeCreator.init paths.inputDir, paths.dataDir, defer err
 return throw err if err
 OsuApi.init config.get('osu-api-key')

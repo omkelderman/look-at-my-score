@@ -1,6 +1,7 @@
 express = require 'express'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
 OsuApi = require '../OsuApi'
+CoverCache = require '../CoverCache'
 
 notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
 badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
@@ -55,8 +56,12 @@ router.post '/submit', (req, res, next) ->
         return next badRequest 'score object not valid' if not OsuScoreBadgeCreator.isValidScoreObj req.body.score
         score = req.body.score
 
+    # # grab the new.ppy.sh cover of the beatmap to start with
+    await CoverCache.grab beatmap.beatmapset_id, defer err, coverJpg
+    return next err if err
+
     # create the thing :D
-    await OsuScoreBadgeCreator.create beatmap, gameMode, score, defer err, imageId
+    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, defer err, imageId
     return next err if err
     console.log 'CREATED:', imageId
     res.json

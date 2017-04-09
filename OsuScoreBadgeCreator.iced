@@ -1,5 +1,4 @@
 gm = require 'gm'
-request = require 'request'
 fs = require 'fs'
 path = require 'path'
 uuidV4 = require 'uuid/v4'
@@ -265,18 +264,15 @@ toModsStr = (mods) ->
 # input objects must be "correct"
 # check with isValidScoreObj/isValidBeatmapObj
 # otherwise shit will fail
-createOsuScoreBadge = (beatmap, gameMode, score, done) ->
+createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
 
     # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
     score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
 
-    # grab the new.ppy.sh cover of the beatmap to start with
-    imgStream = request "https://assets.ppy.sh/beatmaps/#{beatmap.beatmapset_id}/covers/cover.jpg"
-
-    # create image from cover-asset
-    img = gm(imgStream, 'cover.jpg')
+    # start
+    img = gm bgImg
 
     # draw all text for background-blur
     drawAllTheText img, beatmap, gameMode, score, true

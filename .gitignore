@@ -103,8 +103,8 @@ config/local.yml
 config/local-*.yml
 
 # data dir
-data
-data-test
+data/
+coverCache/
 
 # test file
 test.iced
