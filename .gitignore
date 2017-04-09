@@ -106,3 +106,5 @@ config/local-*.yml
 data
 data-test
 
+# test file
+test.iced
