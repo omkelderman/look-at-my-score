@@ -75,17 +75,38 @@ router.get '/image-count', (req, res, next) ->
     return next err if err
     res.json imagesAmount
 
+getDefaultFromSet = (set) ->
+    prevMode = set[0].mode
+    prevId = set[0].beatmap_id
+    size = set.length
+    index = 1
+    while index < size
+        map = set[index]
+        if map.mode isnt prevMode
+            break
+        prevId = map.beatmap_id
+        ++index
+    return prevId
+
 router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
-    setId = +req.params.set_id
+    setId = req.params.set_id
     await OsuApi.getBeatmapSet setId, defer err, set
     return next err if err
+
+    if not set or set.length is 0
+        return next notFound setId
+        # return res.json
+        #     setId: setId
+        #     set: null
+
 
     set.sort (a, b) -> a.mode - b.mode || a.difficultyrating - b.difficultyrating
     set = set.map (b) -> beatmap_id: b.beatmap_id, version: b.version, mode: b.mode
     res.json
         setId: setId
-        set: set
         stdOnlySet: set.every (b) -> +b.mode is 0
+        defaultVersion: getDefaultFromSet set
+        set: set
 
 # not found? gen 404
 router.use (req, res, next) ->

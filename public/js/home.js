@@ -50,10 +50,12 @@ var $chooseScoreBox = $('#choose-score');
 var $chooseScoreBtnGroup = $('#choose-score-btn-group');
 var $manualBeatmapSelect = $('#manual-beatmap-select');
 var $autoBeatmapSelect = $('#auto-beatmap-select');
+var $beatmapVersionSelect = $('#beatmap-version-select');
 
 // inputs
 var $inputUsername = $('#username');
 var $inputBeatmapUrl = $('#beatmap_url');
+var $beatmapVersion = $('#beatmap_version');
 var $inputBeatmapId = $('#beatmap_id');
 var $inputMode = $('#mode');
 
@@ -248,18 +250,22 @@ $inputBeatmapUrl.allInputUpdate(function(e) {
             // TODO: handle /s/-urls
             console.log('s-url', value);
             // make it appear as error for now
-            $inputBeatmapUrl.parent().parent().toggleClass('has-error', true);
+            //$inputBeatmapUrl.parent().parent().toggleClass('has-error', true);
+            $beatmapVersionSelect.slideDown();
+            handleSetUrl(value.s);
         } else {
             // hype, URL is parsed!
             console.log('valid input:', value);
             $inputBeatmapId.customSet(value.b);
             $inputMode.customSet(value.m);
+            $beatmapVersionSelect.slideUp();
 
             // done :D
             return;
         }
     } else {
         console.log('error', value);
+        $beatmapVersionSelect.slideUp();
     }
 
     // if we reach this, means we dont have a final value
@@ -267,6 +273,70 @@ $inputBeatmapUrl.allInputUpdate(function(e) {
     $inputBeatmapId.customSet('');
     $inputMode.customSet('0');
 });
+$beatmapVersion.allInputUpdate(function(e) {
+    var value = $beatmapVersion.val().split('|');
+    if(value.length != 2) {
+        // not found or error
+        $inputBeatmapId.customSet('');
+        $inputMode.customSet('0');
+        return;
+    }
+
+    // found
+    $inputBeatmapId.customSet(value[0]);
+    $inputMode.customSet(value[1]);
+});
+
+handleSetUrlTimeout = -1
+function handleSetUrl(s) {
+    $beatmapVersion.empty();
+    $beatmapVersion.append($('<option>').text('loading...'))
+    $beatmapVersion.data('setId', s);
+    clearTimeout(handleSetUrlTimeout);
+    handleSetUrlTimeout = setTimeout(function() {
+        handleSetUrlForReal(s);
+    }, 250);
+}
+
+function handleSetUrlForReal(s) {
+    console.log('DO IT', s);
+    $.ajax({
+        type: 'get',
+        url: '/api/diffs/' + s,
+        success: function(data) {
+            if($beatmapVersion.data('setId') != s) return;
+            $inputBeatmapUrl.parent().parent().toggleClass('has-error', false);
+            $beatmapVersion.empty();
+            for(var i=0, _len = data.set.length; i<_len; ++i) {
+                var version = data.set[i];
+                var $option = $('<option>')
+                    .text(version.version)
+                    .attr('value', version.beatmap_id + '|' + version.mode)
+                    .attr('selected', version.beatmap_id == data.defaultVersion);
+                $beatmapVersion.append($option);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            if($beatmapVersion.data('setId') != s) return;
+            var error = jqXHR.responseJSON;
+            $inputBeatmapUrl.parent().parent().toggleClass('has-error', true);
+            $beatmapVersion.empty();
+            var $option;
+            if(error.status == 404) {
+                $option = $('<option>').text('Beatmap not found...');
+            } else {
+                $option = $('<option>').text('Something went wrong...');
+            }
+            $option.attr('value', '');
+            $beatmapVersion.append($option);
+        },
+        complete: function() {
+            if($beatmapVersion.data('setId') != s) return;
+            console.log('complete', s)
+            $beatmapVersion.trigger('change');
+        }
+    });
+}
 
 function parseBeatmapUrl(string) {
     if(typeof string !== 'string' || string.length === 0) {
@@ -314,7 +384,7 @@ function parseBeatmapUrl(string) {
     };
 }
 
-$('.toggle-beatmap-selection-style').click(function(e){
+$('.toggle-beatmap-selection-style > a').click(function(e){
     e.preventDefault();
     $manualBeatmapSelect.slideToggle();
     $autoBeatmapSelect.slideToggle();
@@ -329,6 +399,7 @@ $(document).ready(function() {
     $result.hide();
     $chooseScoreBox.hide();
     $manualBeatmapSelect.hide();
+    $beatmapVersionSelect.hide();
     $submitBtn.prop('disabled', true);
 
     startImageCounterUpdate();

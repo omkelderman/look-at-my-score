@@ -82,3 +82,8 @@ legend {
     font-weight: bold;
     font-style: italic;
 }
+
+.toggle-beatmap-selection-style {
+    text-align: center;
+    margin-top: -15px;
+}

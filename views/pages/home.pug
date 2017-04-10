@@ -44,8 +44,12 @@ block content
                         .col-md-4
                             input#beatmap_url.form-control.input-md(type='text', placeholder='https://osu.ppy.sh/b/123456?m=0')
                             span.help-block Enter the URL of a beatmap page
-                                br
-                                a.toggle-beatmap-selection-style(href='#'): small: em or enter beatmap-id and mode manually
+                    .form-group#beatmap-version-select
+                        label.col-md-4.control-label(for='beatmap_version') Difficulty
+                        .col-md-4
+                            select#beatmap_version.form-control
+                                //- TODO stuff
+                    p.toggle-beatmap-selection-style: a(href='#'): small: em or enter beatmap-id and mode manually
                 #manual-beatmap-select
                     .form-group
                         label.col-md-4.control-label(for='beatmap_id') Beatmap ID
@@ -61,8 +65,7 @@ block content
                                 option(value=2) osu!catch
                                 option(value=3) osu!mania
                             span.help-block Choose the game mode!
-                                br
-                                a.toggle-beatmap-selection-style(href='#'): small: em or enter beatmap by URL
+                    p.toggle-beatmap-selection-style: a(href='#'): small: em or enter beatmap by URL
             .form-group
                 .col-md-4.col-md-offset-4
                     button#submit-btn.btn.btn-primary(type='submit') Create
