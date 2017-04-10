@@ -75,6 +75,18 @@ router.get '/image-count', (req, res, next) ->
     return next err if err
     res.json imagesAmount
 
+router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
+    setId = +req.params.set_id
+    await OsuApi.getBeatmapSet setId, defer err, set
+    return next err if err
+
+    set.sort (a, b) -> a.mode - b.mode || a.difficultyrating - b.difficultyrating
+    set = set.map (b) -> beatmap_id: b.beatmap_id, version: b.version, mode: b.mode
+    res.json
+        setId: setId
+        set: set
+        stdOnlySet: set.every (b) -> +b.mode is 0
+
 # not found? gen 404
 router.use (req, res, next) ->
     err = new Error 'Not Found'
