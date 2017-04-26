@@ -2,9 +2,9 @@ request = require 'request'
 gm = require 'gm'
 fs = require 'fs'
 RedisCache = require './RedisCache'
+config = require 'config'
 
-CACHE_TIME = 60*60*24 # 24 hour
-
+CACHE_TIME = config.get 'cacheTimes.get_beatmaps'
 COVER_CACHE_DIR = null
 
 initStuf = (coverCacheDir) ->

@@ -11,3 +11,7 @@ redis:
     host: localhost
     port: 6379
     prefix: osu-scores
+
+cacheTimes:
+    get_beatmaps: 86400 # 24*60*60 ==> 24 hour
+    get_scores: 300 #         5*60 ==> 5 min

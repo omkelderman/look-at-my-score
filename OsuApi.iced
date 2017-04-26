@@ -1,11 +1,9 @@
 request = require 'request'
 RedisCache = require './RedisCache'
+config = require 'config'
 
-CACHE_TIMES =
-    get_beatmaps: 60*60*24 # 24 hour
-    get_scores:   60*5     # 5 min
-
-API_KEY = require('config').get 'osu-api-key'
+CACHE_TIMES = config.get 'cacheTimes'
+API_KEY = config.get 'osu-api-key'
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
 
