@@ -7,7 +7,6 @@ killable = require 'killable'
 config = require 'config'
 redis = require 'redis'
 OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
-OsuApi = require './OsuApi'
 RedisCache = require './RedisCache'
 CoverCache = require './CoverCache'
 
@@ -44,7 +43,6 @@ RedisCache.init redisClient
 CoverCache.init paths.coverCacheDir
 await OsuScoreBadgeCreator.init paths.inputDir, paths.dataDir, defer err
 return throw err if err
-OsuApi.init config.get('osu-api-key')
 
 # setup routes
 ROUTE_MOUNTS =

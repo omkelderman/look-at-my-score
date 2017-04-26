@@ -5,10 +5,7 @@ CACHE_TIMES =
     get_beatmaps: 60*60*24 # 24 hour
     get_scores:   60*5     # 5 min
 
-API_KEY = null
-
-initStuff = (key) ->
-    API_KEY = key
+API_KEY = require('config').get 'osu-api-key'
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
 
@@ -55,5 +52,3 @@ module.exports.getBeatmapSet = getBeatmapSet = (id, done) ->
 
 module.exports.getScores = getScores = (beatmapId, mode, username, done) ->
     doApiRequest 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
-
-module.exports.init = initStuff
