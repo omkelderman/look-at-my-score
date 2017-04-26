@@ -59,6 +59,8 @@ var $beatmapVersion = $('#beatmap_version');
 var $inputBeatmapId = $('#beatmap_id');
 var $inputMode = $('#mode');
 
+var MODES = ['osu!', 'osu!taiko', 'osu!catch', 'osu!mania'];
+
 var imageCounterUpdaterIntervalId = 0;
 
 function incrementImageCounter() {
@@ -309,8 +311,12 @@ function handleSetUrlForReal(s) {
             $beatmapVersion.empty();
             for(var i=0, _len = data.set.length; i<_len; ++i) {
                 var version = data.set[i];
+                var text = version.version
+                if(!data.stdOnlySet) {
+                    text = '[' + MODES[version.mode] + '] ' + text
+                }
                 var $option = $('<option>')
-                    .text(version.version)
+                    .text(text)
                     .attr('value', version.beatmap_id + '|' + version.mode)
                     .attr('selected', version.beatmap_id == data.defaultVersion);
                 $beatmapVersion.append($option);
