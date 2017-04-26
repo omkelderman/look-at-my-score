@@ -10,11 +10,18 @@ storeInCache = (expire, key, value, done) ->
     done = generalStoreInCacheResultHandler if not done
     if expire and expire > 0 # discard negative and non-existing expire values
         console.log 'SETEX', expire, key
+        value = JSON.stringify value
         REDIS_CLIENT.setex key, expire, value, done
 
     # else dont store anything, its a cache, so dont want to have things that stay forever
 
-get = (key, done) -> REDIS_CLIENT.get key, done
+get = (key, done) -> REDIS_CLIENT.get key, (err, result) ->
+    return done err if err
+    return done null, null if result is null
+    try
+        return done null, JSON.parse result
+    catch ex
+        return done ex
 
 createCacheKeyFromObject = (obj) ->
     Object.keys obj

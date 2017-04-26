@@ -324,7 +324,7 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
 getGeneratedImagesAmount = (done) ->
     await RedisCache.get 'image-count', defer err, cachedResult
     return done err if err
-    return done null, parseInt cachedResult if cachedResult # yay cache exists
+    return done null, cachedResult if cachedResult # yay cache exists
 
     # ok, lets query that crap
     await fs.readdir IMAGE_DATA_DIR, defer err, files

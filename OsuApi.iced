@@ -13,7 +13,7 @@ doApiRequest = (endpoint, params, done) ->
     cacheKey = buildCacheKey endpoint, params
     await RedisCache.get cacheKey, defer err, cachedResult
     return done err if err
-    return done null, JSON.parse(cachedResult), true if cachedResult # yay cache exists
+    return done null, cachedResult, true if cachedResult # yay cache exists
 
     # cache didnt exist, lets get it
     url = 'https://osu.ppy.sh/api/' + endpoint
@@ -28,7 +28,7 @@ doApiRequest = (endpoint, params, done) ->
     done null, body
 
     # also store it in cache
-    RedisCache.storeInCache CACHE_TIMES[endpoint], cacheKey, JSON.stringify(body)
+    RedisCache.storeInCache CACHE_TIMES[endpoint], cacheKey, body
 
 doApiRequestAndGetFirst = (endpoint, params, done) ->
     await doApiRequest endpoint, params, defer err, result
@@ -48,7 +48,7 @@ module.exports.getBeatmapSet = getBeatmapSet = (id, done) ->
             # we have the data so why not, can potentially be less api calls made :D
             for b in result
                 forgedCacheKey = buildCacheKey 'get_beatmaps', {b:b.beatmap_id, m:b.mode, a:1}
-                RedisCache.storeInCache CACHE_TIMES['get_beatmaps'], forgedCacheKey, JSON.stringify([b])
+                RedisCache.storeInCache CACHE_TIMES['get_beatmaps'], forgedCacheKey, [b]
 
 module.exports.getScores = getScores = (beatmapId, mode, username, done) ->
     doApiRequest 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
