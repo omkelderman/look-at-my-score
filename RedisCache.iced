@@ -3,11 +3,11 @@ REDIS_CLIENT = null
 initStuff = (redisClient) ->
     REDIS_CLIENT = redisClient
 
-generalStoreInCacheResultHandler = (err, result) ->
-    console.error 'welp, error while setting redis key', cacheKey if err or result isnt 'OK'
+generalStoreInCacheResultHandler = (key) ->
+    return (err, result) -> console.error 'welp, error while setting redis key', key if err or result isnt 'OK'
 
 storeInCache = (expire, key, value, done) ->
-    done = generalStoreInCacheResultHandler if not done
+    done = generalStoreInCacheResultHandler(key) if not done
     if expire and expire > 0 # discard negative and non-existing expire values
         console.log 'SETEX', expire, key
         value = JSON.stringify value
