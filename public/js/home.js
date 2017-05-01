@@ -52,6 +52,16 @@ var $manualBeatmapSelect = $('#manual-beatmap-select');
 var $autoBeatmapSelect = $('#auto-beatmap-select');
 var $beatmapVersionSelect = $('#beatmap-version-select');
 
+// map display
+var $mapDisplayComment = $('#map-display-comment');
+var $mapDisplay = $('#map-display');
+var $mapDisplayMode = $('#map-mode');
+var $mapDisplayModeComment = $('#map-mode-comment');
+var $mapDisplayArtist = $('#map-artist');
+var $mapDisplayTitle = $('#map-title');
+var $mapDisplayVersion = $('#map-version');
+var $mapDisplayCreator = $('#map-creator');
+
 // inputs
 var $inputUsername = $('#username');
 var $inputBeatmapUrl = $('#beatmap_url');
@@ -193,6 +203,7 @@ $goBackBtn.click(function(e) {
     startImageCounterUpdate();
 });
 
+// validate input but also update map display
 function validateInput(e) {
     var inputIsValid = true;
 
@@ -227,6 +238,13 @@ function validateInput(e) {
         inputIsValid = false;
     }
 
+    if(!beatmapIdInvalid && !modeInvalid) {
+        // beatmap id and mode are valid
+        loadMapDisplay();
+    } else {
+        hideMapDisplay();
+    }
+
     $submitBtn.prop('disabled', !inputIsValid);
 }
 
@@ -249,17 +267,14 @@ $inputBeatmapUrl.allInputUpdate(function(e) {
     $inputBeatmapUrl.parent().parent().toggleClass('has-error', !value.isValid);
     if(value.isValid) {
         if(value.s) {
-            // TODO: handle /s/-urls
+            // its a /s/ url, need extra info!
             console.log('s-url', value);
-            // make it appear as error for now
-            //$inputBeatmapUrl.parent().parent().toggleClass('has-error', true);
             $beatmapVersionSelect.slideDown();
             handleSetUrl(value.s);
         } else {
             // hype, URL is parsed!
             console.log('valid input:', value);
-            $inputBeatmapId.customSet(value.b);
-            $inputMode.customSet(value.m);
+            setBeatmapAndModeInput(e, value.b, value.m);
             $beatmapVersionSelect.slideUp();
 
             // done :D
@@ -272,22 +287,41 @@ $inputBeatmapUrl.allInputUpdate(function(e) {
 
     // if we reach this, means we dont have a final value
     // set back to default values
-    $inputBeatmapId.customSet('');
-    $inputMode.customSet('0');
+    setBeatmapAndModeInput(e);
 });
 $beatmapVersion.allInputUpdate(function(e) {
     var value = $beatmapVersion.val().split('|');
     if(value.length != 2) {
         // not found or error
-        $inputBeatmapId.customSet('');
-        $inputMode.customSet('0');
+        setBeatmapAndModeInput(e);
         return;
     }
 
     // found
-    $inputBeatmapId.customSet(value[0]);
-    $inputMode.customSet(value[1]);
+    setBeatmapAndModeInput(e, value[0], value[1])
 });
+
+// custom detect change handler
+// since we update both at the same time
+// and we want to only fire *one* change event
+// we cant use my custom change detect thingy
+// it fires the event-handler manually, and we need an event to give it
+// so this function requires *an* event :P
+function setBeatmapAndModeInput(e, b, m) {
+    var oldB = $inputBeatmapId.val();
+    var oldM = $inputMode.val();
+    if(oldB === b && oldM === m) {
+        // nothing has changed
+        return;
+    }
+
+    // change detected!
+    $inputBeatmapId.customSet(b || '', true);
+    $inputMode.customSet(m || '0', true);
+
+    // manually fire the change event handler
+    clearUrlInputAndValidateInput(e);
+}
 
 handleSetUrlTimeout = -1
 function handleSetUrl(s) {
@@ -401,11 +435,75 @@ $('#sample-img a.dismiss').click(function(e){
     $sampleImg.slideUp();
 });
 
+function loadMapDisplay() {
+    console.log('load map display requested');
+    var oldB = $mapDisplay.data('b');
+    var oldM = $mapDisplay.data('m');
+
+    var b = $inputBeatmapId.val();
+    var m = $inputMode.val();
+
+    if(oldB === b && oldM === m) {
+        // display already contains correct data :D
+        console.log('HYPU');
+        showMapDisplay();
+        return;
+    }
+
+    updateAndShowMapDisplayComment('loading...');
+    $.ajax({
+        type: 'get',
+        url: '/api/beatmap/' + b + '-' + m,
+        success: function(data) {
+            showMapDisplay(data);
+            $mapDisplay.data('b', b);
+            $mapDisplay.data('m', m);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            if(b != $inputBeatmapId.val() || m != $inputMode.val()) {
+                // state has changed, do not display error
+                return;
+            }
+            var error = jqXHR.responseJSON;
+            if(error.status == 404) {
+                updateAndShowMapDisplayComment('Beatmap not found!');
+            } else {
+                updateAndShowMapDisplayComment('Something went wrong...');
+            }
+        }
+    });
+}
+
+function showMapDisplay(data) {
+    if(data) {
+        $mapDisplayMode.text(MODES[data.mode]);
+        $mapDisplayModeComment.text(data.converted ? ' (converted)' : '');
+        $mapDisplayArtist.text(data.artist);
+        $mapDisplayTitle.text(data.title);
+        $mapDisplayVersion.text(data.version);
+        $mapDisplayCreator.text(data.creator);
+    }
+    $mapDisplayComment.hide();
+    $mapDisplay.show();
+}
+
+function updateAndShowMapDisplayComment(message) {
+    $mapDisplayComment.text(message);
+    $mapDisplay.hide();
+    $mapDisplayComment.show();
+}
+
+function hideMapDisplay() {
+    $mapDisplayComment.hide();
+    $mapDisplay.hide();
+}
+
 $(document).ready(function() {
     $result.hide();
     $chooseScoreBox.hide();
     $manualBeatmapSelect.hide();
     $beatmapVersionSelect.hide();
+    hideMapDisplay();
     $submitBtn.prop('disabled', true);
 
     startImageCounterUpdate();

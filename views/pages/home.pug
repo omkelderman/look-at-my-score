@@ -38,6 +38,10 @@ block content
                         span.help-block The username of the person who did the score
             fieldset
                 legend What?
+                .row
+                    .col-md-6.col-md-offset-3
+                        p#map-display-comment Loading or whatever idk
+                        p#map-display [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
                 #auto-beatmap-select
                     .form-group
                         label.col-md-4.control-label(for='beatmap_url') Beatmap

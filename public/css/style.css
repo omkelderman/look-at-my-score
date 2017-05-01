@@ -87,3 +87,12 @@ legend {
     text-align: center;
     margin-top: -15px;
 }
+
+#map-display, #map-display-comment {
+    text-align: center;
+    font-size: larger;
+}
+
+#map-display > span {
+    color: #ff66aa;
+}

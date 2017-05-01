@@ -94,11 +94,7 @@ router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
     return next err if err
 
     if not set or set.length is 0
-        return next notFound setId
-        # return res.json
-        #     setId: setId
-        #     set: null
-
+        return next notFound 'no beatmap-set found with that id'
 
     set.sort (a, b) -> a.mode - b.mode || a.difficultyrating - b.difficultyrating
     set = set.map (b) -> beatmap_id: b.beatmap_id, version: b.version, mode: b.mode
@@ -107,6 +103,21 @@ router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
         stdOnlySet: set.every (b) -> +b.mode is 0
         defaultVersion: getDefaultFromSet set
         set: set
+
+router.get '/beatmap/:beatmap_id([0-9]+)-:mode([0-3])', (req, res, next) ->
+    beatmapId = req.params.beatmap_id
+    mode = req.params.mode
+    await OsuApi.getBeatmap beatmapId, mode, defer err, beatmap
+    return next err if err
+    return next notFound 'no beatmap found with that id' if not beatmap
+
+    res.json
+        mode: mode
+        converted: beatmap.mode != mode
+        title: beatmap.title
+        artist: beatmap.artist
+        version: beatmap.version
+        creator: beatmap.creator
 
 # not found? gen 404
 router.use (req, res, next) ->
