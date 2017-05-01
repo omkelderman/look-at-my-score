@@ -1,9 +1,4 @@
 TODO
-- ajax-load beatmap-info and show beatmap-info on page
-  * yay its now in cache, image gen will be faster :D xD
-  * could do a thing where if you paste in a set-id, you get a "popup" asking wich diff?
-  * just fancy
-- to do above two: need UI change, not sure how im gonna do that
 - prolly other shit
 - somehow "log" something when a thing gets created
   * ip / user-agent / maybe other client-specific crap
@@ -23,3 +18,8 @@ DONE
 - refresh image counter when pressing back (or even just whenever with ajax crap)
 - handle multiple scores per beatmap per user
 - option to paste in beatmap-uri
+- ajax-load beatmap-info and show beatmap-info on page
+  * yay its now in cache, image gen will be faster :D xD
+  * could do a thing where if you paste in a set-id, you get a "popup" asking wich diff?
+  * just fancy
+- to do above two: need UI change, not sure how im gonna do that
