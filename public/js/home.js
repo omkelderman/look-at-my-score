@@ -175,9 +175,9 @@ function doThaThing(data) {
                 $contactMe.attr('href', '/contact?error=non-implemented-resulti&result=' + data.result);
             }
         },
-        error: function(jqXHR, textStatus, errorThrown) {
+        error: function(jqXHR) {
             var error = jqXHR.responseJSON;
-            console.error('ERROR', error)
+            console.error('ERROR', error);
             if(error) {
                 $resultText.val('ERROR, im sorry, something went wrong... The server reported: \'' + error.detailMessage + '\'');
                 $contactMe.attr('href', '/contact?error=' + error.status);
@@ -194,9 +194,9 @@ function doThaThing(data) {
 }
 
 $goBackBtn.click(function(e) {
-    console.log('hahaha')
+    console.log('hahaha');
     e.preventDefault();
-    $frm.slideDown()
+    $frm.slideDown();
     $result.slideUp();
     $chooseScoreBox.slideUp();
 
@@ -207,9 +207,9 @@ $goBackBtn.click(function(e) {
 function validateInput(e) {
     var inputIsValid = true;
 
-    $inputUsernameFormGroup = $inputUsername.parent().parent();
-    $inputBeatmapIdFormGroup = $inputBeatmapId.parent().parent();
-    $inputModeFormGroup = $inputMode.parent().parent();
+    var $inputUsernameFormGroup = $inputUsername.parent().parent();
+    var $inputBeatmapIdFormGroup = $inputBeatmapId.parent().parent();
+    var $inputModeFormGroup = $inputMode.parent().parent();
 
     var usernameInvalid = $inputUsername.val().length == 0;
     if(e.currentTarget == $inputUsername[0]) {
@@ -220,7 +220,7 @@ function validateInput(e) {
         inputIsValid = false;
     }
 
-    var beatmapIdInvalid = !/^[0-9]+$/.test($inputBeatmapId.val())
+    var beatmapIdInvalid = !/^[0-9]+$/.test($inputBeatmapId.val());
     if(e.currentTarget == $inputBeatmapId[0]) {
         $inputBeatmapIdFormGroup.toggleClass('has-error', beatmapIdInvalid);
     }
@@ -229,7 +229,7 @@ function validateInput(e) {
         inputIsValid = false;
     }
 
-    var modeInvalid = $inputMode.val() < 0 || $inputMode.val() > 4
+    var modeInvalid = $inputMode.val() < 0 || $inputMode.val() > 4;
     if(e.currentTarget == $inputMode[0]) {
         $inputModeFormGroup.toggleClass('has-error', modeInvalid);
     }
@@ -298,7 +298,7 @@ $beatmapVersion.allInputUpdate(function(e) {
     }
 
     // found
-    setBeatmapAndModeInput(e, value[0], value[1])
+    setBeatmapAndModeInput(e, value[0], value[1]);
 });
 
 // custom detect change handler
@@ -323,10 +323,10 @@ function setBeatmapAndModeInput(e, b, m) {
     clearUrlInputAndValidateInput(e);
 }
 
-handleSetUrlTimeout = -1
+var handleSetUrlTimeout = -1;
 function handleSetUrl(s) {
     $beatmapVersion.empty();
-    $beatmapVersion.append($('<option>').text('loading...'))
+    $beatmapVersion.append($('<option>').text('loading...'));
     $beatmapVersion.data('setId', s);
     clearTimeout(handleSetUrlTimeout);
     handleSetUrlTimeout = setTimeout(function() {
@@ -345,9 +345,9 @@ function handleSetUrlForReal(s) {
             $beatmapVersion.empty();
             for(var i=0, _len = data.set.length; i<_len; ++i) {
                 var version = data.set[i];
-                var text = version.version
+                var text = version.version;
                 if(!data.stdOnlySet) {
-                    text = '[' + MODES[version.mode] + '] ' + text
+                    text = '[' + MODES[version.mode] + '] ' + text;
                 }
                 var $option = $('<option>')
                     .text(text)
@@ -356,7 +356,7 @@ function handleSetUrlForReal(s) {
                 $beatmapVersion.append($option);
             }
         },
-        error: function(jqXHR, textStatus, errorThrown) {
+        error: function(jqXHR) {
             if($beatmapVersion.data('setId') != s) return;
             var error = jqXHR.responseJSON;
             $inputBeatmapUrl.parent().parent().toggleClass('has-error', true);
@@ -372,7 +372,7 @@ function handleSetUrlForReal(s) {
         },
         complete: function() {
             if($beatmapVersion.data('setId') != s) return;
-            console.log('complete', s)
+            console.log('complete', s);
             $beatmapVersion.trigger('change');
         }
     });
@@ -415,7 +415,7 @@ function parseBeatmapUrl(string) {
             isValid: true,
             b: newSiteResult[2],
             m: ['osu', 'taiko', 'fruits', 'mania'].indexOf(newSiteResult[1])
-        }
+        };
     }
 
     return {
@@ -459,7 +459,7 @@ function loadMapDisplay() {
             $mapDisplay.data('b', b);
             $mapDisplay.data('m', m);
         },
-        error: function(jqXHR, textStatus, errorThrown) {
+        error: function(jqXHR) {
             if(b != $inputBeatmapId.val() || m != $inputMode.val()) {
                 // state has changed, do not display error
                 return;

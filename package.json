@@ -12,5 +12,8 @@
     "redis": "^2.6.5",
     "request": "^2.79.0",
     "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^3.19.0"
   }
 }
