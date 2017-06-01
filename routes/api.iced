@@ -30,7 +30,7 @@ router.post '/submit', (req, res, next) ->
         if not beatmap
             return next notFound 'no beatmap found with that id'
     else
-        return next badRequest 'beatmap object not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.score
+        return next badRequest 'beatmap object not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.beatmap
         beatmap = req.body.beatmap
 
     # get score
