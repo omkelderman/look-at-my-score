@@ -9,7 +9,7 @@ html
         link(rel='icon', type='image/ico', href='/favicon.ico')
 
         //- meta description
-        meta(name='description', content='osu!scores - ' + meta_description)
+        meta(name='description', content='Look At My Sco.re! - ' + meta_description)
 
         // exo 2 font
         link(rel='stylesheet', href='//fonts.googleapis.com/css?family=Exo+2:300,300italic,200,400,400italic,500,500italic,600,600italic,700,700italic,900')
@@ -45,6 +45,9 @@ html
 
         div#footer
             div.container
-                p.text-muted.text-center &copy; 2016-#{new Date().getFullYear()} &ndash; Olle Kelderman (#[a(href='https://osu.ppy.sh/u/2756335') oliebol]) &ndash; #[a(href='/contact') Contact]
+                p.text-muted.text-center
+                    | &copy; #{new Date().getFullYear()} &ndash; Olle Kelderman (#[a(href='https://osu.ppy.sh/u/2756335') oliebol]) &ndash; #[a(href='/contact') Contact]
+                    br
+                    small: em This site is not operated by, sponsored by, or affiliated with osu!
 
         block js

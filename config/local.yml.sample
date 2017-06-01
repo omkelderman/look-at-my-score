@@ -9,3 +9,6 @@ osu-api-key: API KEY HERE
 #redis:
 #    path: /var/run/redis/redis.sock # for example, listen on a unix socket
 #    db: 1 # or connect to different db
+
+# Maybe use a different domain for the actual images
+#image-result-url: "{protocol}://example.com/{image-id}.png"

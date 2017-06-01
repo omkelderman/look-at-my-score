@@ -9,13 +9,13 @@ body {
   min-height: 100%;
   height: auto;
   /* Negative indent footer by its height */
-  margin: 0 auto -60px;
+  margin: 0 auto -80px;
   /* Pad bottom by footer height */
-  padding: 0 0 60px;
+  padding: 0 0 80px;
 }
 
 /* Set the fixed height of the footer here */
 #footer {
-  height: 60px;
+  height: 80px;
   background-color: rgba(0,0,0,0.2);
 }

@@ -1,3 +1,4 @@
+config = require 'config'
 express = require 'express'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
 OsuApi = require '../OsuApi'
@@ -64,11 +65,16 @@ router.post '/submit', (req, res, next) ->
     await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, defer err, imageId
     return next err if err
     console.log 'CREATED:', imageId
+    url = config.get 'image-result-url'
+        .replace '{protocol}', req.protocol
+        .replace '{host}', req.get 'host'
+        .replace '{image-id}', imageId
+
     res.json
         result: 'image'
         image:
             id: imageId
-            url: "#{req.protocol}://#{req.get('host')}/score/#{imageId}.png"
+            url: url
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
