@@ -58,11 +58,13 @@ fieldset[disabled] .btn-primary.active {
 h2 {
     border-bottom-style: dashed;
     border-bottom-width: 1px;
+    border-color: #999;
 }
 
 legend {
     color: white;
     border-style: dotted;
+    border-color: #666;
 }
 
 .disclaimer {
@@ -95,4 +97,9 @@ legend {
 
 #map-display > span {
     color: #ff66aa;
+}
+
+hr.dark {
+    margin-bottom: 5px;
+    border-color: #333;
 }
