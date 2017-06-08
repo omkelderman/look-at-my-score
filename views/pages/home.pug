@@ -2,89 +2,86 @@ extends ../layout
 
 block vars
     - title = 'Look At My Sco.re!'
-    - meta_description = 'Create awesome score-summary pictures you can share anywhere you want!'
-
-block content
-    div.container
-        div.page-header
-            h1= title
-        p
-            | Ever had that amazing, mind-bending, supertastic osu! play? Now you can tell all your friends: "Hey! #[strong Look At My Score!]"
-            br
-            | Thought the osu! result screen is just a tad too big to spam in a discord chat? Or you just wanted to put it somewhere where there's not a whole lot of space?
-
-        p.text-center.kek Look no further! This is the tool for you!
-        #sample-img
-            p.text-center Simply enter some details below and get a nice picture generated just for you! An example of such a picture would be this:
-            img.img-responsive.score.center-block(src='/images/sample.png')
-            p.text-center: small: em: a.dismiss(href='#') Dismiss
-
-        h2 Create
-        form#form.form-horizontal(method='post', action='/api/submit')
-            fieldset
-                legend Who?
-                .form-group
-                    label.col-md-4.control-label(for='username') osu! username
-                    .col-md-4
-                        input#username.form-control.input-md(name='username', type='text', required=true, placeholder='oliebol')
-                        span.help-block The username of the person who did the score
-            fieldset
-                legend What?
-                .row
-                    .col-md-6.col-md-offset-3
-                        p#map-display-comment Loading or whatever idk
-                        p#map-display [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
-                #auto-beatmap-select
-                    .form-group
-                        label.col-md-4.control-label(for='beatmap_url') Beatmap
-                        .col-md-4
-                            input#beatmap_url.form-control.input-md(type='text', placeholder='https://osu.ppy.sh/b/123456?m=0')
-                            span.help-block Enter the URL of a beatmap page
-                    .form-group#beatmap-version-select
-                        label.col-md-4.control-label(for='beatmap_version') Difficulty
-                        .col-md-4
-                            select#beatmap_version.form-control
-                    p.toggle-beatmap-selection-style: a(href='#'): small: em or enter beatmap-id and mode manually
-                #manual-beatmap-select
-                    .form-group
-                        label.col-md-4.control-label(for='beatmap_id') Beatmap ID
-                        .col-md-4
-                            input#beatmap_id.form-control.input-md(name='beatmap_id', type='text', required=true, placeholder=123456)
-                            span.help-block The ID of the beatmap, not the beatmap-set!
-                    .form-group
-                        label.col-md-4.control-label(for='mode') Gamemode
-                        .col-md-4
-                            select#mode.form-control(name='mode', required=true)
-                                option(value=0) osu!
-                                option(value=1) osu!taiko
-                                option(value=2) osu!catch
-                                option(value=3) osu!mania
-                            span.help-block Choose the game mode!
-                    p.toggle-beatmap-selection-style: a(href='#'): small: em or enter beatmap by URL
-            .form-group
-                .col-md-4.col-md-offset-4
-                    button#submit-btn.btn.btn-primary(type='submit') Create
-                    =' '
-                    small.sidenote: em #[span#image-count= generatedImagesAmount] images have been generated so far!
-        #result
-            #progressBar.progress.progress-striped.active
-                .progress-bar(role='progressbar', aria-valuenow=100, aria-valuemin=0, aria-valuemax=100, style='width: 100%')
-            img#resultImg.score.center-block
-            .row
-                .col-md-10
-                    .input-group
-                        span.input-group-addon Result:
-                        input#resultText.form-control(type='text')
-                .col-md-2
-                    button#go-back-btn.btn.btn-primary(type='button') Go Back
-            p.text-center.sidenote: small: em Anything not looking like it should? #[a#contact-me(href='/contact') Contact me!]
-                
-        #choose-score
-            h2 Choose score
-            #choose-score-btn-group.btn-group-vertical(role='group')
-
-        hr.dark
-        p.text-center: small: em Keep in mind this website is still kinda in development, so not everything might work exactly as expected.#[br]Feel free to #[a(href='/contact') contact me] if you think something is wrong!
+    - meta_description = 'Create awesome osu! score-summary pictures you can share anywhere you want!'
 
 block append js
-    script(type='text/javascript', src='/js/home.js')
+        script(type='text/javascript', src='/js/home.js')
+
+block content
+    p
+        | Ever had that amazing, mind-bending, supertastic osu! play? Now you can tell all your friends: "Hey! #[strong Look At My Score!]"
+        br
+        | Thought the osu! result screen is just a tad too big to spam in a discord chat? Or you just wanted to put it somewhere where there's not a whole lot of space?
+
+    p.text-center.kek Look no further! This is the tool for you!
+    #sample-img
+        p.text-center Simply enter some details below and get a nice picture generated just for you! An example of such a picture would be this:
+        img.img-responsive.score.center-block(src='/images/sample.png')
+        p.text-center: small: em: a.dismiss(href='#') Dismiss
+
+    h2 Create
+    form#form.form-horizontal(method='post', action='/api/submit')
+        fieldset
+            legend Who?
+            .form-group
+                label.col-md-4.control-label(for='username') osu! username
+                .col-md-4
+                    input#username.form-control.input-md(name='username', type='text', required=true, placeholder='oliebol')
+                    span.help-block The username of the person who did the score
+        fieldset
+            legend What?
+            .row
+                .col-md-6.col-md-offset-3
+                    p#map-display-comment Loading or whatever idk
+                    p#map-display [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
+            #auto-beatmap-select
+                .form-group
+                    label.col-md-4.control-label(for='beatmap_url') Beatmap
+                    .col-md-4
+                        input#beatmap_url.form-control.input-md(type='text', placeholder='https://osu.ppy.sh/b/123456?m=0')
+                        span.help-block Enter the URL of a beatmap page
+                .form-group#beatmap-version-select
+                    label.col-md-4.control-label(for='beatmap_version') Difficulty
+                    .col-md-4
+                        select#beatmap_version.form-control
+                p.toggle-beatmap-selection-style: a(href='#'): small: em or enter beatmap-id and mode manually
+            #manual-beatmap-select
+                .form-group
+                    label.col-md-4.control-label(for='beatmap_id') Beatmap ID
+                    .col-md-4
+                        input#beatmap_id.form-control.input-md(name='beatmap_id', type='text', required=true, placeholder=123456)
+                        span.help-block The ID of the beatmap, not the beatmap-set!
+                .form-group
+                    label.col-md-4.control-label(for='mode') Gamemode
+                    .col-md-4
+                        select#mode.form-control(name='mode', required=true)
+                            option(value=0) osu!
+                            option(value=1) osu!taiko
+                            option(value=2) osu!catch
+                            option(value=3) osu!mania
+                        span.help-block Choose the game mode!
+                p.toggle-beatmap-selection-style: a(href='#'): small: em or enter beatmap by URL
+        .form-group
+            .col-md-4.col-md-offset-4
+                button#submit-btn.btn.btn-primary(type='submit') Create
+                =' '
+                small.sidenote: em #[span#image-count= generatedImagesAmount] images have been generated so far!
+    #result
+        #progressBar.progress.progress-striped.active
+            .progress-bar(role='progressbar', aria-valuenow=100, aria-valuemin=0, aria-valuemax=100, style='width: 100%')
+        img#resultImg.score.center-block
+        .row
+            .col-md-10
+                .input-group
+                    span.input-group-addon Result:
+                    input#resultText.form-control(type='text')
+            .col-md-2
+                button#go-back-btn.btn.btn-primary(type='button') Go Back
+        p.text-center.sidenote: small: em Anything not looking like it should? #[a#contact-me(href='/contact') Contact me!]
+            
+    #choose-score
+        h2 Choose score
+        #choose-score-btn-group.btn-group-vertical(role='group')
+
+    hr.dark
+    p.text-center: small: em Keep in mind this website is still kinda in development, so not everything might work exactly as expected.#[br]Feel free to #[a(href='/contact') contact me] if you think something is wrong!

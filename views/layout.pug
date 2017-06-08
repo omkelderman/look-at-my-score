@@ -9,7 +9,7 @@ html
         link(rel='icon', type='image/ico', href='/favicon.ico')
 
         //- meta description
-        meta(name='description', content='Look At My Sco.re! - ' + meta_description)
+        meta(name='description', content=meta_description?'Look At My Sco.re! - ' + meta_description:'Look At My Sco.re!')
 
         // exo 2 font
         link(rel='stylesheet', href='//fonts.googleapis.com/css?family=Exo+2:300,300italic,200,400,400italic,500,500italic,600,600italic,700,700italic,900')
@@ -41,7 +41,11 @@ html
             ga('send', 'pageview');
     body
         div#wrap
-            block content
+            .container
+                div.page-header
+                    h1= title
+
+                block content
 
         div#footer
             div.container

@@ -1,7 +1,9 @@
 extends layout
+block vars
+    - title = 'Error!'
 
 block content
-    .container#error-page
+    #error-page
         .panel.panel-danger
             .panel-heading
                 h1.panel-title #{status} &ndash; #{message}
