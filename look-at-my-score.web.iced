@@ -50,6 +50,10 @@ app.use morgan 'dev'
 app.use bodyParser.urlencoded extended:true
 app.use bodyParser.json()
 
+app.use (req, res, next) ->
+    res.locals.url = req.url
+    next()
+
 # actual content
 for routeName, routeMount of ROUTE_MOUNTS
     app.use routeMount, ROUTES[routeName]

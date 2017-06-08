@@ -5,6 +5,37 @@ body {
     font-family: 'Exo 2', sans-serif;
 }
 
+ul.custom-nav {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+ul.custom-nav li {
+    float: left;
+}
+
+ul.custom-nav li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+ul.custom-nav li.active a {
+    background-color: #7f1a47;
+}
+
+ul.custom-nav li a:hover {
+    background-color: #b71c61;
+}
+
 img.score {
     box-shadow: 0 0 29px #555;
 }

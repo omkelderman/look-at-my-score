@@ -43,8 +43,12 @@ html
     body
         div#wrap
             .container
-                div.page-header
+                div.page-header(style='position: relative;')
                     h1= title
+                    
+                    ul.custom-nav
+                        each text, itemUrl in {'/': 'Home', '/contact': 'Contact', '/faq': 'FAQ'}
+                            li(class=url==itemUrl?'active':undefined): a(href=itemUrl)= text
 
                 block content
 
