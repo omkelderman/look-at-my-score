@@ -51,6 +51,7 @@ var $chooseScoreBtnGroup = $('#choose-score-btn-group');
 var $manualBeatmapSelect = $('#manual-beatmap-select');
 var $autoBeatmapSelect = $('#auto-beatmap-select');
 var $beatmapVersionSelect = $('#beatmap-version-select');
+var $manualScoreSelect = $('#manual-score-select');
 
 // map display
 var $mapDisplayComment = $('#map-display-comment');
@@ -123,12 +124,33 @@ $frm.submit(function(e) {
     $submitBtn.prop('disabled', true);
     $frm.slideUp();
     $sampleImg.slideUp();
-    $result.slideDown();
     $resultImg.hide();
+    stopImageCounterUpdate();
+
+    var data;
+    if($manualScoreSelect.is(':hidden')) {
+        data = $frm.serialize();
+    } else {
+        data = {score: {}};
+        $.each($frm.serializeArray(), function(i, field) {
+            if(field.name === 'username') {
+                data.score.username = field.value;
+            } else if (field.name.lastIndexOf('score_', 0) === 0) {
+                // starts with 'score_'
+                data.score[field.name.substr(6)] = field.value;
+            } else {
+                data[field.name] = field.value || null;
+            }
+            console.log(i, field);
+        });
+    }
+
+
+    $result.slideDown();
     $progressBar.show();
     $resultText.val('fetching data and generating image...');
-    stopImageCounterUpdate();
-    doThaThing($frm.serialize());
+    console.log(data);
+    doThaThing(data);
 });
 
 function handleChooseScore(e) {
@@ -429,6 +451,27 @@ $('.toggle-beatmap-selection-style > a').click(function(e){
     $manualBeatmapSelect.slideToggle();
     $autoBeatmapSelect.slideToggle();
 });
+$('#toggle-manual-score-select > a').click(function(e){
+    e.preventDefault();
+    $manualScoreSelect.slideToggle(updateManualSelectInputs);
+});
+
+function updateManualSelectInputs() {
+    var isHidden = $manualScoreSelect.is(':hidden');
+    $manualScoreSelect.find(':input').each(function() {
+        var $el = $(this);
+        var val = $el.data('visible-required-status');
+        $el.prop('required', isHidden ? false : val);
+        $el.prop('disabled', isHidden);
+    });
+}
+
+function initManualSelectInputs() {
+    $manualScoreSelect.find(':input').each(function() {
+        var $el = $(this);
+        $el.data('visible-required-status', $el.prop('required'));
+    });
+}
 
 $('#sample-img a.dismiss').click(function(e){
     e.preventDefault();
@@ -503,8 +546,11 @@ $(document).ready(function() {
     $chooseScoreBox.hide();
     $manualBeatmapSelect.hide();
     $beatmapVersionSelect.hide();
+    $manualScoreSelect.hide();
     hideMapDisplay();
     $submitBtn.prop('disabled', true);
 
     startImageCounterUpdate();
+    initManualSelectInputs();
+    updateManualSelectInputs();
 });

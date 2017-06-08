@@ -268,8 +268,11 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
 
-    # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
-    score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
+    try
+        # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
+        score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
+    catch dateParseError
+        return done dateParseError
 
     # start
     img = gm bgImg
