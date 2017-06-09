@@ -356,3 +356,4 @@ module.exports =
     getAcc: getAcc
     isValidScoreObj: isValidScoreObj
     isValidBeatmapObj: isValidBeatmapObj
+    MOD_NAMES: MOD_NAMES

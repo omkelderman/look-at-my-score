@@ -52,6 +52,9 @@ var $manualBeatmapSelect = $('#manual-beatmap-select');
 var $autoBeatmapSelect = $('#auto-beatmap-select');
 var $beatmapVersionSelect = $('#beatmap-version-select');
 var $manualScoreSelect = $('#manual-score-select');
+var $modsManualInput = $('#mods-manual-input');
+var $modsCheckboxesInput = $('#mods-checkboxes-input');
+var $allThemModCheckboxes = $('#mods-checkboxes-input :checkbox');
 
 // map display
 var $mapDisplayComment = $('#map-display-comment');
@@ -69,6 +72,9 @@ var $inputBeatmapUrl = $('#beatmap_url');
 var $beatmapVersion = $('#beatmap_version');
 var $inputBeatmapId = $('#beatmap_id');
 var $inputMode = $('#mode');
+
+var $inputScoreEnabledMods = $('#score_enabled_mods');
+
 
 var MODES = ['osu!', 'osu!taiko', 'osu!catch', 'osu!mania'];
 
@@ -455,6 +461,32 @@ $('#toggle-manual-score-select > a').click(function(e){
     e.preventDefault();
     $manualScoreSelect.slideToggle(updateManualSelectInputs);
 });
+$('#toggle-mods-input > a').click(function(e) {
+    e.preventDefault();
+
+    // if where going from manual to checkboxes update the checkboxes
+    if($modsCheckboxesInput.is(':hidden')) {
+        var val = +$inputScoreEnabledMods.val();
+        $allThemModCheckboxes.each(function() {
+            var localVal = +this.value;
+            this.checked = (val&localVal)===localVal;
+        });
+    }
+
+    // do the animation
+    $modsManualInput.slideToggle();
+    $modsCheckboxesInput.slideToggle();
+});
+
+$allThemModCheckboxes.change(function() {
+    var value = 0;
+    $allThemModCheckboxes.each(function() {
+        if(this.checked) {
+            value += +this.value;
+        }
+    });
+    $inputScoreEnabledMods.val(value);
+});
 
 function updateManualSelectInputs() {
     var isHidden = $manualScoreSelect.is(':hidden');
@@ -547,6 +579,7 @@ $(document).ready(function() {
     $manualBeatmapSelect.hide();
     $beatmapVersionSelect.hide();
     $manualScoreSelect.hide();
+    $modsManualInput.hide();
     hideMapDisplay();
     $submitBtn.prop('disabled', true);
 

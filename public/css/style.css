@@ -22,6 +22,10 @@ img.score {
     padding-top: 50px;
 }
 
+#mods-checkboxes-input .checkbox-inline {
+    position: relative;
+}
+
 .form-control {
     color: black;
 }

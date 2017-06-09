@@ -8,6 +8,7 @@ router.get '/', (req, res, next) ->
     return next err if err
     res.render 'pages/home',
         generatedImagesAmount: imagesAmount
+        mods: OsuScoreBadgeCreator.MOD_NAMES
 
 router.get '/contact', (req, res) ->
     res.render 'pages/contact',

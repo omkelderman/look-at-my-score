@@ -38,10 +38,17 @@ block content
                             br
                             small (Just like osu api, which more or less is the random reason. ^^)
                 .form-group
-                    label.col-md-4.control-label(for='score_enabled_mods') Enabled mods
-                    .col-md-4
-                        input.form-control.input-md(name='score_enabled_mods', type='number', required=true, placeholder='0')
-                        span.help-block Mods-bitmask, for reference see: #[a(href='https://github.com/ppy/osu-api/wiki#mods') https://github.com/ppy/osu-api/wiki#mods]
+                    label.col-md-2.control-label(for='score_enabled_mods') Enabled mods
+                    .col-md-10
+                        #mods-manual-input
+                            input#score_enabled_mods.form-control.input-md(name='score_enabled_mods', type='number', required=true, placeholder='0', value='0')
+                            span.help-block Mods-bitmask, for reference see: #[a(href='https://github.com/ppy/osu-api/wiki#mods') https://github.com/ppy/osu-api/wiki#mods]
+                        #mods-checkboxes-input
+                            each text, value in mods
+                                label.checkbox-inline
+                                    input(type='checkbox', value=value)
+                                    | #{text}
+                p#toggle-mods-input.toggle-link: a(href='#'): small: em Toggle manual mod-bitmask input
                 .form-group
                     label.col-md-2.control-label(for='score_score') Score
                     .col-md-2
