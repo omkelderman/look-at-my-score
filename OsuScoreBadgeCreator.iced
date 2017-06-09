@@ -261,19 +261,7 @@ toModsStr = (mods) ->
             str.push '+' + MOD_NAMES[mod]
     return str.join ' '
 
-# input objects must be "correct"
-# check with isValidScoreObj/isValidBeatmapObj
-# otherwise shit will fail
-createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
-    # make sure gameMode is a number
-    gameMode = +gameMode
-
-    try
-        # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
-        score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
-    catch dateParseError
-        return done dateParseError
-
+drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
     # start
     img = gm bgImg
 
@@ -302,6 +290,26 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
 
     # add mods
     drawMods img, enabled_mods
+
+    return img
+
+# input objects must be "correct"
+# check with isValidScoreObj/isValidBeatmapObj
+# otherwise shit will fail
+createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
+    # make sure gameMode is a number
+    gameMode = +gameMode
+
+    try
+        # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
+        score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
+    catch dateParseError
+        return done dateParseError
+
+    try
+        img = drawAllTheThings bgImg, beatmap, gameMode, score
+    catch imgCreateError
+        return done imgCreateError
 
     # generate an unique id
     id = uuidV4()
