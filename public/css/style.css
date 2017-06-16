@@ -89,6 +89,10 @@ legend {
     font-style: italic;
 }
 
+strong.hype {
+    color: #ff66aa;
+}
+
 .toggle-link {
     text-align: center;
     margin-top: -15px;

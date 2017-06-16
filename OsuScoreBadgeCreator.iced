@@ -340,7 +340,7 @@ getGeneratedImagesAmount = (done) ->
     # ok, lets query that crap
     await fs.readdir IMAGE_DATA_DIR, defer err, files
     return done err if err
-    imageCount = files.filter((n) -> n[-4..] is '.png').length
+    imageCount = files.reduce ((n, file) -> n + (file[-4..] is '.png')), 0
 
     # yay, report back
     done null, imageCount
