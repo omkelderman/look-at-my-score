@@ -62,13 +62,12 @@ initStuff = (src, dest, done) ->
     return done()
 
 
-zeroFillAndAddSpaces = (number, width) ->
+addThousandSeparators = (number, character) ->
+    # make sure its a string
     number = number.toString()
-    width -= number.length
-    while width > 0
-        number = '0' + number
-        --width
-    return number.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+
+    # introduce spaces
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, character)
 
 getStdAcc = (score) ->
     total = +score.countmiss + +score.count50 + +score.count100 + +score.count300
@@ -157,7 +156,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
 
     # draw acc
     img.fontSize(48)
-        .drawText(461, 136, zeroFillAndAddSpaces(score.score, 8))
+        .drawText(461, 136, addThousandSeparators(score.score, ' '))
 
         .font(FONTS.Regular)
 
