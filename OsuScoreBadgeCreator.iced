@@ -1,3 +1,4 @@
+config = require 'config'
 gm = require 'gm'
 fs = require 'fs'
 path = require 'path'
@@ -194,6 +195,11 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         .fontSize(22)
         .font(FONTS.Italic)
         .drawText(190, 85, beatmap.version)
+
+        # draw some watermark thingy
+        .fontSize 12
+        .drawText 4, 14, config.get 'watermark.text'
+        .drawLine 4, 15, 4 + config.get('watermark.underline-length'), 15
 
     # TODO: maybe add logic to see if it is ranked or not, aka maybe pp is here but is not actually applied or something
     if score.pp

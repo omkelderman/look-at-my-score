@@ -17,3 +17,7 @@ cacheTimes:
     get_scores: 300 #         5*60 ==> 5 min
 
 image-result-url: "{protocol}://{host}/score/{image-id}.png"
+
+watermark:
+    text: LookAtMySco.re
+    underline-length: 88
