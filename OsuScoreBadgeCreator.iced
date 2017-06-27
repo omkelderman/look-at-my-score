@@ -12,6 +12,9 @@ COLOR3 = '#EA609B'
 COLOR_BLUR = '#000'
 COLOR3_STROKE = '#fff'
 
+COLOR_WATERMARK = '#ccc'
+COLOR_WATERMARK_BLUR = '#000'
+
 # runtime "constants"
 MODS_AVAILABLE = []
 MOD_NAMES = {}
@@ -196,7 +199,8 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         .font(FONTS.Italic)
         .drawText(190, 85, beatmap.version)
 
-        # draw some watermark thingy
+    # draw some watermark thingy
+    img.fill(if blurColor then COLOR_WATERMARK_BLUR else COLOR_WATERMARK)
         .fontSize 12
         .drawText 4, 14, config.get 'watermark.text'
         .drawLine 4, 15, 4 + config.get('watermark.underline-length'), 15
