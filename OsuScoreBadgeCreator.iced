@@ -105,37 +105,37 @@ getAcc = (mode, score) ->
 ####################
 
 drawStdHitCounts = (img, score) ->
-    img.drawText(215, 123, score.count300 + 'x')   # A - 300
-        .drawText(215, 163, score.count100 + 'x')  # B - 100
-        .drawText(215, 203, score.count50 + 'x')   # C - 50
-        .drawText(365, 123, score.countgeki + 'x') # D - 300g
-        .drawText(365, 163, score.countkatu + 'x') # E - 100k
-        .drawText(365, 203, score.countmiss + 'x') # F - miss
+    img.drawText(215, 123, 'x' + score.count300)   # A - 300
+        .drawText(215, 163, 'x' + score.count100)  # B - 100
+        .drawText(215, 203, 'x' + score.count50)   # C - 50
+        .drawText(365, 123, 'x' + score.countgeki) # D - 300g
+        .drawText(365, 163, 'x' + score.countkatu) # E - 100k
+        .drawText(365, 203, 'x' + score.countmiss) # F - miss
 
 drawTaikoHitCounts = (img, score) ->
 
-    img.drawText(215, 123, (score.count300 - score.countgeki) + 'x')   # A - great part 1 (greats - geki)
-        .drawText(215, 163, (score.count100 - score.countkatu) + 'x')  # B - good part 1 (goods - katu)
-        .drawText(215, 203, score.countmiss + 'x') # C - miss
-        .drawText(365, 123, score.countgeki + 'x') # D - great part 2 (geki)
-        .drawText(365, 163, score.countkatu + 'x') # E - good part 2 (katu)
+    img.drawText(215, 123, 'x' + (score.count300 - score.countgeki))   # A - great part 1 (greats - geki)
+        .drawText(215, 163, 'x' + (score.count100 - score.countkatu))  # B - good part 1 (goods - katu)
+        .drawText(215, 203, 'x' + score.countmiss) # C - miss
+        .drawText(365, 123, 'x' + score.countgeki)  # D - great part 2 (geki)
+        .drawText(365, 163, 'x' + score.countkatu) # E - good part 2 (katu)
     # F - non existend
 
 drawCtbHitCounts = (img, score) ->
-    img.drawText(215, 123, score.count300 + 'x')   # A - 300
-        .drawText(215, 163, score.count100 + 'x')  # B - 100
-        .drawText(215, 203, score.count50 + 'x')   # C - 50 (droplets)
-        .drawText(365, 123, score.countmiss + 'x') # D - miss
+    img.drawText(215, 123, 'x' + score.count300)   # A - 300
+        .drawText(215, 163, 'x' + score.count100)  # B - 100
+        .drawText(215, 203, 'x' + score.count50)   # C - 50 (droplets)
+        .drawText(365, 123, 'x' + score.countmiss) # D - miss
     # E - non existend
     # F - non existend
 
 drawManiaHitCounts = (img, score) ->
-    img.drawText(215, 123, score.count300 + 'x')   # A -
-        .drawText(215, 163, score.countkatu + 'x') # B
-        .drawText(215, 203, score.count50 + 'x')   # C
-        .drawText(365, 123, score.countgeki + 'x') # D
-        .drawText(365, 163, score.count100 + 'x')  # E
-        .drawText(365, 203, score.countmiss + 'x') # F
+    img.drawText(215, 123, 'x' + score.count300)   # A -
+        .drawText(215, 163, 'x' + score.countkatu) # B
+        .drawText(215, 203, 'x' + score.count50)   # C
+        .drawText(365, 123, 'x' + score.countgeki) # D
+        .drawText(365, 163, 'x' + score.count100)  # E
+        .drawText(365, 203, 'x' + score.countmiss) # F
 
 DRAW_HIT_COUNT_FUNCTIONS = [drawStdHitCounts, drawTaikoHitCounts, drawCtbHitCounts, drawManiaHitCounts]
 drawHitCounts = (img, mode, score) ->
@@ -167,10 +167,10 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
     comboOffset = if beatmap.max_combo then 0 else 15
     # draw combo
     img.fontSize(32)
-        .drawText(451, 176 + comboOffset, score.maxcombo + 'x')
+        .drawText(451, 176 + comboOffset, 'x' + score.maxcombo)
 
     if beatmap.max_combo
-        img.fontSize(22).drawText(456, 206, '/' + beatmap.max_combo + 'x')
+        img.fontSize(22).drawText(456, 206, '/' + beatmap.max_combo)
 
     # draw other info crap
     img.fontSize(40)
