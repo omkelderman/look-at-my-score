@@ -436,8 +436,8 @@ function parseBeatmapUrl(string) {
         };
     }
 
-    // [http[s]://]new.ppy.sh/beatmapsets/123456#[osu|taiko|fruits|mania]/123456
-    var newSiteResult = /^(?:https?\:\/\/)?new\.ppy\.sh\/beatmapsets\/[0-9]+#(osu|taiko|fruits|mania)\/([0-9]+)$/.exec(string);
+    // [http[s]://]osu.ppy.sh/beatmapsets/123456#[osu|taiko|fruits|mania]/123456
+    var newSiteResult = /^(?:https?\:\/\/)?osu\.ppy\.sh\/beatmapsets\/[0-9]+#(osu|taiko|fruits|mania)\/([0-9]+)$/.exec(string);
     if(newSiteResult) {
         return {
             isValid: true,
