@@ -2,7 +2,6 @@ config = require 'config'
 gm = require 'gm'
 fs = require 'fs'
 path = require 'path'
-uuidV4 = require 'uuid/v4'
 RedisCache = require './RedisCache'
 PathConstants = require './PathConstants'
 OsuMods = require './OsuMods'
@@ -228,7 +227,7 @@ drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
 # input objects must be "correct"
 # check with isValidScoreObj/isValidBeatmapObj
 # otherwise shit will fail
-createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
+createOsuScoreBadge = (bgImg, beatmap, gameMode, score, id, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
 
@@ -243,8 +242,6 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
     catch imgCreateError
         return done imgCreateError
 
-    # generate an unique id
-    id = uuidV4()
     outputFileStart = path.resolve IMAGE_DATA_DIR, id
 
     # write png file
@@ -261,8 +258,8 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, done) ->
     await fs.writeFile outputFileStart+'.json', JSON.stringify(outputData), defer err
     return done err if err
 
-    # hype, we're done, return the id
-    return done null, id
+    # hype, we're done
+    return done()
 
 getGeneratedImagesAmount = (done) ->
     await RedisCache.get 'image-count', defer err, cachedResult

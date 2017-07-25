@@ -5,6 +5,7 @@ OsuApi = require '../OsuApi'
 CoverCache = require '../CoverCache'
 OsuMods = require '../OsuMods'
 OsuAcc = require '../OsuAcc'
+uuidV4 = require 'uuid/v4'
 
 notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
 badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
@@ -64,7 +65,8 @@ router.post '/submit', (req, res, next) ->
     return next err if err
 
     # create the thing :D
-    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, defer err, imageId
+    imageId = uuidV4()
+    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, imageId, defer err
     return next err if err
     console.log 'CREATED:', imageId
     url = config.get 'image-result-url'
