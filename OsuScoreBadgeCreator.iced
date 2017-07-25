@@ -17,26 +17,31 @@ COLOR3_STROKE = '#fff'
 COLOR_WATERMARK = '#ccc'
 COLOR_WATERMARK_BLUR = '#000'
 
-# runtime "constants"
-IMAGE_SOURCE_DIR = PathConstants.inputDir
-IMAGE_DATA_DIR = PathConstants.dataDir
-HITS_DIR = path.resolve IMAGE_SOURCE_DIR, 'hit'
-RANKINGS_DIR = path.resolve IMAGE_SOURCE_DIR, 'ranking'
-FONTS_DIR = path.resolve IMAGE_SOURCE_DIR, 'fonts'
-FONTS = {}
-
 # read fonts
 FONTFILE_REGEX = /^Exo2\-(.+)\.ttf$/
-for file in fs.readdirSync FONTS_DIR
+FONTS = {}
+for file in fs.readdirSync path.resolve PathConstants.inputDir, 'fonts'
     result = FONTFILE_REGEX.exec file
     if result
-        FONTS[result[1]] = path.resolve FONTS_DIR, file
+        FONTS[result[1]] = path.resolve PathConstants.inputDir, 'fonts', file
+
+# read overlays
+OVERLAYS = {}
+for file in fs.readdirSync path.resolve PathConstants.inputDir, 'overlay'
+    if file.endsWith '.png'
+        OVERLAYS[file[...-4]] = path.resolve PathConstants.inputDir, 'overlay', file
+
+# read rankings
+RANKINGS = {}
+for file in fs.readdirSync path.resolve PathConstants.inputDir, 'ranking'
+    if file.endsWith '.png'
+        RANKINGS[file[...-4]] = path.resolve PathConstants.inputDir, 'ranking', file
 
 addThousandSeparators = (number, character) ->
     # make sure its a string
     number = number.toString()
 
-    # introduce spaces
+    # introduce character
     return number.replace(/\B(?=(\d{3})+(?!\d))/g, character)
 
 ####################
@@ -209,16 +214,20 @@ drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
     # draw all the text again, but now for real
     drawAllTheText img, beatmap, gameMode, score, false
 
-    # draw the rank
+    # lets draw some additional bits
     enabled_mods = +score.enabled_mods
     rankingOffset = if enabled_mods is 0 then 40 else 20
-    img.draw("image Over 0,#{rankingOffset} 0,0 #{RANKINGS_DIR}/#{score.rank}.png")
+    rankingImagePath = RANKINGS[score.rank]
+    throw new Error "Render error: unknown rank '#{score.rank}'" if not rankingImagePath
+    overlayImagePath = OVERLAYS[gameMode]
+    throw new Error "Render error: unknown gamemode '#{gameMode}'" if not rankingImagePath
 
-        # and draw the "hit-objects"
-        .draw("image Over 0,0 0,0 #{HITS_DIR}/overlay-#{gameMode}.png")
+    img
+        # draw the rank
+        .draw("image Over 0,#{rankingOffset} 0,0 #{rankingImagePath}")
 
-        # and draw the game-mode icon
-        .draw("image Over 155,65 0,0 #{HITS_DIR}/mode-#{gameMode}.png")
+        # and draw the "hit-objects" and mode-icon
+        .draw("image Over 0,0 0,0 #{overlayImagePath}")
 
     # add mods
     drawMods img, enabled_mods
@@ -243,7 +252,7 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, id, done) ->
     catch imgCreateError
         return done imgCreateError
 
-    outputFileStart = path.resolve IMAGE_DATA_DIR, id
+    outputFileStart = path.resolve PathConstants.dataDir, id
 
     # write png file
     await img.write outputFileStart+'.png', defer err
@@ -268,7 +277,7 @@ getGeneratedImagesAmount = (done) ->
     return done null, cachedResult if cachedResult # yay cache exists
 
     # ok, lets query that crap
-    await fs.readdir IMAGE_DATA_DIR, defer err, files
+    await fs.readdir PathConstants.dataDir, defer err, files
     return done err if err
     imageCount = files.reduce ((n, file) -> n + (file[-4..] is '.png')), 0
 
