@@ -131,9 +131,9 @@ router.get '/beatmap/:beatmap_id([0-9]+)-:mode([0-3])', (req, res, next) ->
 
 # not found? gen 404
 router.use (req, res, next) ->
-    err = new Error 'Not Found'
-    err.status = 404
-    next err
+    next
+        message: 'Not Found'
+        status: 404
 
 # on error
 router.use (err, req, res, next) ->

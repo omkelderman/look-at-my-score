@@ -57,10 +57,10 @@ for routeName, routeMount of ROUTE_MOUNTS
     app.use routeMount, ROUTES[routeName]
 
 app.use (req, res, next) ->
-    err = new Error 'Not Found'
-    err.status = 404
-    err.detail = "Page \"#{req.originalUrl}\" could not be found on this server :("
-    next(err)
+    next
+        message: 'Not Found'
+        status: 404
+        detail: "Page \"#{req.originalUrl}\" could not be found on this server :("
 
 app.use (err, req, res, next) ->
     res.status err.status || 500
