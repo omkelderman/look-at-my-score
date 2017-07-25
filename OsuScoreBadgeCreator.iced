@@ -4,6 +4,9 @@ fs = require 'fs'
 path = require 'path'
 uuidV4 = require 'uuid/v4'
 RedisCache = require './RedisCache'
+PathConstants = require './PathConstants'
+OsuMods = require './OsuMods'
+OsuAcc = require './OsuAcc'
 
 # constants
 COLOR1 = '#eee'
@@ -16,51 +19,19 @@ COLOR_WATERMARK = '#ccc'
 COLOR_WATERMARK_BLUR = '#000'
 
 # runtime "constants"
-MODS_AVAILABLE = []
-MOD_NAMES = {}
-IMAGE_SOURCE_DIR = null
-IMAGE_DATA_DIR = null
-MODS_DIR = null
-HITS_DIR = null
-RANKINGS_DIR = null
+IMAGE_SOURCE_DIR = PathConstants.inputDir
+IMAGE_DATA_DIR = PathConstants.dataDir
+HITS_DIR = path.resolve IMAGE_SOURCE_DIR, 'hit'
+RANKINGS_DIR = path.resolve IMAGE_SOURCE_DIR, 'ranking'
+FONTS_DIR = path.resolve IMAGE_SOURCE_DIR, 'fonts'
 FONTS = {}
 
-initStuff = (src, dest, done) ->
-    IMAGE_SOURCE_DIR = src
-    IMAGE_DATA_DIR = dest
-
-    # some dirs
-    MODS_DIR = path.resolve IMAGE_SOURCE_DIR, 'mods'
-    HITS_DIR = path.resolve IMAGE_SOURCE_DIR, 'hit'
-    RANKINGS_DIR = path.resolve IMAGE_SOURCE_DIR, 'ranking'
-
-    # read mods
-    await fs.readdir MODS_DIR, defer err, files
-    return done err if err
-
-    MODFILE_REGEX = /^(\d+)\.png$/
-    for file in files
-        result = MODFILE_REGEX.exec file
-        if result
-            modInt = parseInt result[1]
-            await fs.readFile path.resolve(MODS_DIR, modInt+'.txt'), { encoding: 'utf8' }, defer err, modName
-            return done err if err
-            MODS_AVAILABLE.push modInt
-            MOD_NAMES[modInt] = modName.trim()
-    MODS_AVAILABLE.sort (a,b) -> a-b
-
-    # read fonts
-    await fs.readdir(path.resolve(IMAGE_SOURCE_DIR, 'fonts'), defer err, files)
-    return done err if err
-
-    FONTFILE_REGEX = /^Exo2\-(.+)\.ttf$/
-    for file in files
-        result = FONTFILE_REGEX.exec file
-        if result
-            FONTS[result[1]] = path.resolve IMAGE_SOURCE_DIR, 'fonts', file
-
-    return done()
-
+# read fonts
+FONTFILE_REGEX = /^Exo2\-(.+)\.ttf$/
+for file in fs.readdirSync FONTS_DIR
+    result = FONTFILE_REGEX.exec file
+    if result
+        FONTS[result[1]] = path.resolve FONTS_DIR, file
 
 addThousandSeparators = (number, character) ->
     # make sure its a string
@@ -68,37 +39,6 @@ addThousandSeparators = (number, character) ->
 
     # introduce spaces
     return number.replace(/\B(?=(\d{3})+(?!\d))/g, character)
-
-getStdAcc = (score) ->
-    total = +score.countmiss + +score.count50 + +score.count100 + +score.count300
-    return 0 if total is 0
-    points = score.count50*50 + score.count100*100 + score.count300*300
-    return points / (total * 300)
-
-getTaikoAcc = (score) ->
-    total = +score.countmiss + +score.count100 + +score.count300
-    return 0 if total is 0
-    points = (+score.count100) + (score.count300*2)
-    return points / (total * 2)
-
-getCtbAcc = (score) ->
-    points = +score.count50 + +score.count100 + +score.count300
-    total = +score.countmiss + points + +score.countkatu
-    return 0 if total is 0
-    return points/total
-
-getManiaAcc = (score) ->
-    total = +score.countmiss + +score.count50 + +score.count100 + +score.countkatu + +score.count300 + +score.countgeki
-    return 0 if total is 0
-    points = score.count50*50 + score.count100*100 + score.countkatu*200 + score.count300*300 + score.countgeki*300
-    return points / (total * 300)
-
-GET_ACC_FUNCTIONS = [getStdAcc, getTaikoAcc, getCtbAcc, getManiaAcc]
-getAcc = (mode, score) ->
-    func = GET_ACC_FUNCTIONS[mode]
-    acc = if func then func(score) else 0
-    return (acc*100).toFixed 2
-
 
 ####################
 # [A] xxx  [D] xxx #
@@ -152,7 +92,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         .fontSize(27)
     drawHitCounts img, mode, score
 
-    acc = getAcc mode, score
+    acc = OsuAcc.getAccStr mode, score
 
     # draw acc
     img.fontSize(48)
@@ -238,37 +178,20 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
             img.stroke ''
 
 drawMods = (img, mods) ->
-    # if PF (Perfect = 16384) is there, dont show SD (SuddenDeath = 32)
-    mods &= ~32 if (mods & 16384) is 16384
-    # if NC (Nightcore = 512) is there, dont show DT (DoubleTime = 64)
-    mods &= ~64 if (mods & 512) is 512
-
-    modsArr = []
-    for mod in MODS_AVAILABLE
-        modsArr.push mod if (mods & mod) is mod
-
-    for mod, i in modsArr
+    for mod, i in OsuMods.bitmarkToModArray mods
         drawMod img, mod, i, modsArr.length
 
 drawMod = (img, mod, i, totalSize) ->
     x = (12.5*totalSize)+25 - (i * 20)
     if x < 0
         throw new Error 'Render error: too many mods to draw'
-    img.draw "image Over #{x},195 0,0 #{MODS_DIR}/#{mod}.png"
-
+    img.draw "image Over #{x},195 0,0 #{OsuMods.getImagePath(mod)}"
 
 SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'rank', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
 isValidScoreObj = (obj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of obj
 
 BEATMAP_OBJ_REQ_PROPS = ['beatmapset_id', 'max_combo', 'title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> BEATMAP_OBJ_REQ_PROPS.every (x) -> x of obj
-
-toModsStr = (mods) ->
-    str = []
-    for mod in MODS_AVAILABLE
-        if (mods & mod) is mod
-            str.push '+' + MOD_NAMES[mod]
-    return str.join ' '
 
 drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
     # start
@@ -358,11 +281,7 @@ getGeneratedImagesAmount = (done) ->
     RedisCache.storeInCache 10, 'image-count', imageCount
 
 module.exports =
-    init: initStuff
     create: createOsuScoreBadge
     getGeneratedImagesAmount: getGeneratedImagesAmount
-    toModsStr: toModsStr
-    getAcc: getAcc
     isValidScoreObj: isValidScoreObj
     isValidBeatmapObj: isValidBeatmapObj
-    MOD_NAMES: MOD_NAMES

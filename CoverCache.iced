@@ -4,14 +4,12 @@ fs = require 'fs'
 path = require 'path'
 RedisCache = require './RedisCache'
 config = require 'config'
+PathConstants = require './PathConstants'
 
 CACHE_TIME = config.get 'cacheTimes.get_beatmaps'
-COVER_CACHE_DIR = null
+COVER_CACHE_DIR = PathConstants.coverCacheDir
 
-initStuf = (coverCacheDir) ->
-    COVER_CACHE_DIR = coverCacheDir
-
-doThatThing = (beatmapSetId, done) ->
+grabCoverFromOsuServer = (beatmapSetId, done) ->
     cacheKey = 'coverCache:' + beatmapSetId
     await RedisCache.get cacheKey, defer err, cachedResult
     return done err if err
@@ -48,5 +46,4 @@ doThatThing = (beatmapSetId, done) ->
 
 
 module.exports =
-    grab: doThatThing
-    init: initStuf
+    grabCoverFromOsuServer: grabCoverFromOsuServer

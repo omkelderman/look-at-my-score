@@ -19,8 +19,9 @@ doApiRequest = (endpoint, params, done, extraCacheAction) ->
     await request {url:url, qs:params, json:true, gzip:true}, defer err, resp, body
     return done err if err
     if resp.statusCode != 200
-        console.error 'error api call to', url
-        return done new Error 'no 200 response'
+        return done
+            message: 'osu api error'
+            detail: 'osu api did not respond with http 200 OK response'
 
     # all gud, lets give it back right now, no need to wait for redis right
     done null, body

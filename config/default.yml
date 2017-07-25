@@ -1,11 +1,14 @@
 http:
-    # eiher a tcp-port-nr to listen on or the value 'unix-socket' in which
-    # case it will use the value of path.socketFile to listen on
-    listen: unix-socket
+    # eiher a tcp-port-nr to listen on or a path to a unix-socket
+    listen: ../http.sock
 
     # hostname/ip to listen on, '0.0.0.0' for all interfaces
-    # ignored if using 'unix-socket'
+    # ignored if using a unix-socket
     host: 0.0.0.0
+
+dirs:
+    data: data
+    coverCache: coverCache
 
 redis:
     host: localhost

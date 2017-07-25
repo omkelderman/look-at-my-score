@@ -3,6 +3,8 @@ express = require 'express'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
 OsuApi = require '../OsuApi'
 CoverCache = require '../CoverCache'
+OsuMods = require '../OsuMods'
+OsuAcc = require '../OsuAcc'
 
 notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
 badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
@@ -50,7 +52,7 @@ router.post '/submit', (req, res, next) ->
                     beatmap_id: beatmap.beatmap_id
                     mode: gameMode
                     scores: scores
-                    texts: scores.map (score) -> "#{score.score} score | #{OsuScoreBadgeCreator.getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{OsuScoreBadgeCreator.toModsStr(score.enabled_mods)}"
+                    texts: scores.map (score) -> "#{score.score} score | #{OsuAcc.getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{OsuMods.toModsStrLong(score.enabled_mods)}"
 
         score = scores[0]
     else
@@ -58,7 +60,7 @@ router.post '/submit', (req, res, next) ->
         score = req.body.score
 
     # # grab the new.ppy.sh cover of the beatmap to start with
-    await CoverCache.grab beatmap.beatmapset_id, defer err, coverJpg
+    await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
     return next err if err
 
     # create the thing :D

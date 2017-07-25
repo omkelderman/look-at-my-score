@@ -6,25 +6,12 @@ logger = require 'morgan'
 killable = require 'killable'
 config = require 'config'
 redis = require 'redis'
-OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
 RedisCache = require './RedisCache'
-CoverCache = require './CoverCache'
-
-# constants
-paths =
-    dataDir : path.resolve 'data'
-    coverCacheDir : path.resolve 'coverCache'
-    inputDir : path.resolve 'input'
-    socket : path.resolve '../http.sock'
-    routesDir : path.resolve 'routes'
-    viewsDir : path.resolve 'views'
-    staticDir : path.resolve 'public'
-
-USE_UNIX_SOCKET = config.get('http.listen') is 'unix-socket'
+PathConstants = require './PathConstants'
 
 # ensure data-dir/coverCache-dir exists
-fs.mkdirSync paths.dataDir if not fs.existsSync paths.dataDir
-fs.mkdirSync paths.coverCacheDir if not fs.existsSync paths.coverCacheDir
+fs.mkdirSync PathConstants.dataDir if not fs.existsSync PathConstants.dataDir
+fs.mkdirSync PathConstants.coverCacheDir if not fs.existsSync PathConstants.coverCacheDir
 
 # redis
 redisConfig = config.get 'redis'
@@ -40,9 +27,6 @@ redisClient = redis.createClient redisSettings
 
 # init the things
 RedisCache.init redisClient
-CoverCache.init paths.coverCacheDir
-await OsuScoreBadgeCreator.init paths.inputDir, paths.dataDir, defer err
-return throw err if err
 
 # setup routes
 ROUTE_MOUNTS =
@@ -53,16 +37,16 @@ console.log 'Loading routes...'
 ROUTES = {}
 for routeName, routeMount of ROUTE_MOUNTS
     console.log "\tLoading route '#{routeName}'"
-    ROUTES[routeName] = require path.resolve paths.routesDir, "#{routeName}.iced"
+    ROUTES[routeName] = require path.resolve PathConstants.routesDir, "#{routeName}.iced"
 console.log 'Done loading routes'
 
 app = express()
 app.enable 'trust proxy'
-app.set 'views', paths.viewsDir
+app.set 'views', PathConstants.viewsDir
 app.set 'view engine', 'pug'
 
-app.use express.static paths.staticDir
-app.use '/score', express.static paths.dataDir
+app.use express.static PathConstants.staticDir
+app.use '/score', express.static PathConstants.dataDir
 app.use logger 'dev'
 
 app.use bodyParser.urlencoded extended:true
@@ -88,14 +72,14 @@ app.use (err, req, res, next) ->
 
 # start the server
 await
-    if USE_UNIX_SOCKET
-        server = app.listen paths.socket, defer()
+    if PathConstants.socket
+        server = app.listen PathConstants.socket, defer()
     else
         server = app.listen config.get('http.listen'), config.get('http.host'), defer()
 httpListen = server.address()
-if USE_UNIX_SOCKET
+if PathConstants.socket
     # set socket perm, otherwise webserver cant do anything with it
-    fs.chmodSync paths.socket, '666'
+    fs.chmodSync PathConstants.socket, '666'
 killable server
 console.log 'Server running on ', httpListen
 
