@@ -6,6 +6,10 @@ http:
     # ignored if using a unix-socket
     host: 0.0.0.0
 
+    # chmod the socket after creation
+    # ignored if not using unix-socket or if value is falsy
+    socketChmod: 0666
+
 dirs:
     data: data
     coverCache: coverCache

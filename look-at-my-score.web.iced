@@ -77,10 +77,13 @@ await
     else
         server = app.listen config.get('http.listen'), config.get('http.host'), defer()
 httpListen = server.address()
-if PathConstants.socket
-    # set socket perm, otherwise webserver cant do anything with it
-    fs.chmodSync PathConstants.socket, '666'
 killable server
+
+# set socket chmod if applicable
+if PathConstants.socket
+    socketChmod = config.get 'http.socketChmod'
+    fs.chmodSync PathConstants.socket, socketChmod if socketChmod
+
 console.log 'Server running on ', httpListen
 
 # on both SIGINT and SIGTERM start shutting down gracefully
