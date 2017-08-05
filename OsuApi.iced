@@ -42,19 +42,19 @@ doApiRequestAndGetFirst = (endpoint, params, done, extraCacheAction) ->
         done null, result[0]
     , extraCacheAction
 
-module.exports.getBeatmap = getBeatmap = (id, mode, done) ->
+module.exports.getBeatmap = (id, mode, done) ->
     doApiRequestAndGetFirst 'get_beatmaps', {b:id, m:mode, a:1}, done, (value, saveCallback) ->
         return if value.length != 1
         # create forged cache entry with same value, but with the hash as param
         saveCallback {h:value[0].file_md5, m:mode, a:1}, value
 
-module.exports.getBeatmapByHash = getBeatmap = (hash, mode, done) ->
+module.exports.getBeatmapByHash = (hash, mode, done) ->
     doApiRequestAndGetFirst 'get_beatmaps', {h:hash, m:mode, a:1}, done, (value, saveCallback) ->
         return if value.length != 1
         # create forged cache entry with same value, but with the beatmap-id as param
         saveCallback {b:value[0].beatmap_id, m:mode, a:1}, value
 
-module.exports.getBeatmapSet = getBeatmapSet = (id, done) ->
+module.exports.getBeatmapSet = (id, done) ->
     doApiRequest 'get_beatmaps', {s:id}, done, (value, saveCallback) ->
         # create forged cache entries for each diff as if a per-diff-api call was done
         # we have the data so why not, can potentially be less api calls made :D
@@ -63,5 +63,5 @@ module.exports.getBeatmapSet = getBeatmapSet = (id, done) ->
             saveCallback {h:b.file_md5, m:b.mode, a:1}, [b]
 
 
-module.exports.getScores = getScores = (beatmapId, mode, username, done) ->
+module.exports.getScores = (beatmapId, mode, username, done) ->
     doApiRequest 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
