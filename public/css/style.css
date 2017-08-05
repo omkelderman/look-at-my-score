@@ -75,7 +75,7 @@ legend {
     color: red;
 }
 
-#resultImg {
+#result-img {
     margin-bottom: 15px;
 }
 
@@ -124,10 +124,10 @@ hr.dark {
     border-color: #333;
 }
 
-#progressBar > .progress {
+#progress-bar > .progress {
     height: 34px;
 }
-#progressBar > .progress > .progress-bar {
+#progress-bar > .progress > .progress-bar {
     width: 100%;
     font-size: 16px;
     line-height: 30px;
@@ -135,11 +135,11 @@ hr.dark {
     text-shadow: 0px 0px 20px #000;
 }
 
-#errorHeader, #errorText {
+#error-header, #error-text {
     color: #ff0033;
 }
 
-#errorHeader {
+#error-header {
     font-weight: bold;
     font-size: 22px;
 }

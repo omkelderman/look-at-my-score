@@ -52,12 +52,12 @@ var $allThemModCheckboxes = $('#mods-checkboxes-input :checkbox');
 
 // result
 var $result = $('#result');
-var $resultOk = $('#resultOk');
-var $resultError = $('#resultError');
-var $resultImg = $('#resultImg');
-var $progressBar = $('#progressBar');
-var $resultText = $('#resultText');
-var $errorText = $('#errorText');
+var $resultOk = $('#result-ok');
+var $resultError = $('#result-error');
+var $resultImg = $('#result-img');
+var $progressBar = $('#progress-bar');
+var $resultText = $('#result-text');
+var $errorText = $('#error-text');
 var $goBackBtn = $('#go-back-btn');
 var $contactMe = $('#contact-me');
 

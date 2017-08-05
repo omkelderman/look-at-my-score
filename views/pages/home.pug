@@ -132,18 +132,18 @@ block content
                 =' '
                 small.sidenote: em #[span#image-count= generatedImagesAmount] images have been generated so far!
     #result
-        img#resultImg.img-responsive.score.center-block
+        img#result-img.img-responsive.score.center-block
         .row
             .col-md-10#result-col
-                #progressBar
+                #progress-bar
                     .progress.progress-striped.active
                         .progress-bar(role='progressbar', aria-valuenow=100, aria-valuemin=0, aria-valuemax=100) Fetching data and generating image...
-                #resultOk.input-group
+                #result-ok.input-group
                     span.input-group-addon Result:
-                    input#resultText.form-control(type='text')
-                #resultError.row
-                    #errorHeader.col-md-1 Error
-                    #errorText.col-md-11.text-center
+                    input#result-text.form-control(type='text')
+                #result-error.row
+                    #error-header.col-md-1 Error
+                    #error-text.col-md-11.text-center
             .col-md-2#back-btn-col
                 button#go-back-btn.btn.btn-primary(type='button') Go Back
         p.text-center.sidenote: small: em Anything not looking like it should? #[a#contact-me(href='/contact') Contact me!]
