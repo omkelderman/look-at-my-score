@@ -76,7 +76,19 @@ legend {
 }
 
 #resultImg {
-    margin-bottom: 30px;
+    margin-bottom: 15px;
+}
+
+#result-col, #back-btn-col {
+    margin: 10px 0;
+}
+
+#back-btn-col {
+    text-align: right;
+}
+
+#go-back-btn {
+    width: 100%;
 }
 
 .sidenote {
