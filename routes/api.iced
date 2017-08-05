@@ -7,6 +7,35 @@ OsuMods = require '../OsuMods'
 OsuAcc = require '../OsuAcc'
 uuidV4 = require 'uuid/v4'
 
+MYSQL_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+ISO_UTC_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/
+
+convertDateStringToDateObject = (str) ->
+    # lets trim cuz why not
+    str = str.trim()
+
+    # convert str into a date object.
+    # two formats allowed:
+    #   - a mysql-date-string (xxxx-xx-xx xx:xx:xx), asume +8 timezone like osu api
+    #   - ISO UTC string (xxxx-xx-xxTxx:xx:xxZ)
+    if MYSQL_DATE_STRING_REGEX.test str
+        # is mysql-date, lets convert it to an ISO string
+        str = str.replace(' ', 'T')+'+08:00'
+    else if not ISO_UTC_DATE_STRING_REGEX.test str
+        # both not mysql date or iso date string, abort
+        return null
+
+    # convert to date object
+    date = new Date str
+
+    # the original string had a sortof valid ISO date format, but no idea yet if it is an actual valid date, so lets do a final check on that
+    if isNaN date.getTime()
+        # invalid date!
+        return null
+
+    # valid date!
+    return date
+
 notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
 badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
 
@@ -32,9 +61,9 @@ router.post '/submit', (req, res, next) ->
         await OsuApi.getBeatmap req.body.beatmap_id, gameMode, defer err, beatmap
         return next err if err
         if not beatmap
-            return next notFound 'no beatmap found with that id'
+            return next notFound 'beatmap does not exist'
     else
-        return next badRequest 'beatmap object not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.beatmap
+        return next badRequest 'beatmap parameters not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.beatmap
         beatmap = req.body.beatmap
 
     # get score
@@ -42,7 +71,7 @@ router.post '/submit', (req, res, next) ->
         await OsuApi.getScores beatmap.beatmap_id, gameMode, req.body.username, defer err, scores
         return next err if err
         if not scores or scores.length is 0
-            return next notFound 'no score found for that user on that beatmap'
+            return next notFound 'user does not exist, or does not have a score on the selected beatmap'
 
         if scores.length > 1
             # oh no, multiple scores, dunno what to do, ask user
@@ -57,10 +86,12 @@ router.post '/submit', (req, res, next) ->
 
         score = scores[0]
     else
-        return next badRequest 'score object not valid' if not OsuScoreBadgeCreator.isValidScoreObj req.body.score
+        return next badRequest 'score parameters not valid' if not OsuScoreBadgeCreator.isValidScoreObj req.body.score
         score = req.body.score
+        score.date = convertDateStringToDateObject score.date
+        return next badRequest 'date value is invalid' if not score.date
 
-    # # grab the new.ppy.sh cover of the beatmap to start with
+    # grab the new.ppy.sh cover of the beatmap to start with
     await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
     return next err if err
 

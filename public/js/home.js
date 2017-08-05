@@ -38,13 +38,7 @@
 
 var $frm = $('#form');
 var $submitBtn = $('#submit-btn');
-var $result = $('#result');
-var $resultImg = $('#resultImg');
-var $progressBar = $('#progressBar');
-var $resultText = $('#resultText');
-var $goBackBtn = $('#go-back-btn');
 var $sampleImg = $('#sample-img');
-var $contactMe = $('#contact-me');
 var $imageCount = $('#image-count');
 var $chooseScoreBox = $('#choose-score');
 var $chooseScoreBtnGroup = $('#choose-score-btn-group');
@@ -55,6 +49,17 @@ var $manualScoreSelect = $('#manual-score-select');
 var $modsManualInput = $('#mods-manual-input');
 var $modsCheckboxesInput = $('#mods-checkboxes-input');
 var $allThemModCheckboxes = $('#mods-checkboxes-input :checkbox');
+
+// result
+var $result = $('#result');
+var $resultOk = $('#resultOk');
+var $resultError = $('#resultError');
+var $resultImg = $('#resultImg');
+var $progressBar = $('#progressBar');
+var $resultText = $('#resultText');
+var $errorText = $('#errorText');
+var $goBackBtn = $('#go-back-btn');
+var $contactMe = $('#contact-me');
 
 // map display
 var $mapDisplayComment = $('#map-display-comment');
@@ -153,7 +158,7 @@ $frm.submit(function(e) {
 
 
     $result.slideDown();
-    $progressBar.show();
+    toggleProgressBar(true);
     $resultText.val('fetching data and generating image...');
     console.log(data);
     doThaThing(data);
@@ -173,7 +178,7 @@ function handleChooseScore(e) {
 
     // do request with custom score
     $chooseScoreBox.slideUp();
-    $progressBar.show();
+    toggleProgressBar(true);
     $resultText.val('fetching data and generating image...');
     $submitBtn.prop('disabled', true);
     doThaThing(data);
@@ -187,38 +192,67 @@ function doThaThing(data) {
         success: function(data) {
             console.log('SUCCES!', data);
             if(data.result === 'image') {
+                displayResult(true);
                 var imgSrc = data.image.url;
                 $resultImg.attr('src', imgSrc).show();
                 $resultText.val(imgSrc);
                 $contactMe.attr('href', '/contact?img-id=' + data.image.id);
                 incrementImageCounter();
             } else if (data.result === 'multiple-scores') {
+                displayResult(true);
                 console.log('welp, multiple scores');
                 $resultText.val('There are multiple scores, please choose one!');
                 fillScoresMenu(data.data);
                 $chooseScoreBox.slideDown();
             } else {
+                displayResult(false);
                 console.log('ERROR: unexpected result:', data.result);
-                $resultText.val('ERROR: If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
+                $errorText.text('If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
                 $contactMe.attr('href', '/contact?error=non-implemented-resulti&result=' + data.result);
             }
         },
         error: function(jqXHR) {
             var error = jqXHR.responseJSON;
             console.error('ERROR', error);
+            displayResult(false);
             if(error) {
-                $resultText.val('ERROR, im sorry, something went wrong... The server reported: \'' + error.detailMessage + '\'');
+                var errorText;
+                switch(error.status) {
+                case 404:
+                    errorText = 'Data not found: ' + error.detailMessage;
+                    break;
+                case 400:
+                    errorText = 'Invalid data: ' + error.detailMessage;
+                    break;
+                default:
+                    errorText = 'I\'m sorry, something went wrong... The server reported: ' + error.detailMessage;
+                    break;
+                }
+                $errorText.text(errorText);
                 $contactMe.attr('href', '/contact?error=' + error.status);
             } else {
-                $resultText.val('ERROR, im sorry, something went wrong...');
+                $errorText.text('I\'m sorry, something went wrong...');
                 $contactMe.attr('href', '/contact?error=unknown');
             }
         },
         complete: function() {
-            $progressBar.hide();
+            toggleProgressBar(false);
             $submitBtn.prop('disabled', false);
         },
     });
+}
+
+function toggleProgressBar(show) {
+    $progressBar.toggle(show);
+    if(show) {
+        $resultOk.hide();
+        $resultError.hide();
+    }
+}
+
+function displayResult(isOk) {
+    $resultOk.toggle(isOk);
+    $resultError.toggle(!isOk);
 }
 
 $goBackBtn.click(function(e) {

@@ -7,11 +7,14 @@ API_KEY = config.get 'osu-api-key'
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
 
-doApiRequest = (endpoint, params, done, extraCacheAction) ->
+doApiRequest = (endpoint, params, done, extraCacheAction) -> doApiRequestModifyResult endpoint, params, null, done, extraCacheAction
+doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, extraCacheAction) ->
     cacheKey = buildCacheKey endpoint, params
     await RedisCache.get cacheKey, defer err, cachedResult
     return done err if err
-    return done null, cachedResult if cachedResult # yay cache exists
+    if cachedResult # yay cache exists
+        modifyResultHandler cachedResult, true if modifyResultHandler
+        return done null, cachedResult
 
     # cache didnt exist, lets get it
     url = 'https://osu.ppy.sh/api/' + endpoint
@@ -22,6 +25,8 @@ doApiRequest = (endpoint, params, done, extraCacheAction) ->
         return done
             message: 'osu api error'
             detail: 'osu api did not respond with http 200 OK response'
+
+    modifyResultHandler body, false if modifyResultHandler
 
     # all gud, lets give it back right now, no need to wait for redis right
     done null, body
@@ -62,6 +67,14 @@ module.exports.getBeatmapSet = (id, done) ->
             saveCallback {b:b.beatmap_id, m:b.mode, a:1}, [b]
             saveCallback {h:b.file_md5, m:b.mode, a:1}, [b]
 
-
 module.exports.getScores = (beatmapId, mode, username, done) ->
-    doApiRequest 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, done
+    doApiRequestModifyResult 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}
+    , (ss, fromCache) ->
+        for s in ss
+            if fromCache
+                # from cache, is stored as a ISO string
+                s.date = new Date s.date
+            else
+                # from api, is a mysql date string in +8 timezone
+                s.date = new Date s.date.replace(' ', 'T')+'+08:00'
+    , done

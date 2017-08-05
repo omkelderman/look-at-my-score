@@ -88,6 +88,8 @@ drawHitCounts = (img, mode, score) ->
     func = DRAW_HIT_COUNT_FUNCTIONS[mode]
     func img, score if func
 
+formatDate = (d) -> d.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
+
 drawAllTheText = (img, beatmap, mode, score, blurColor) ->
     img
         # draw hit-amounts
@@ -129,7 +131,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         .drawText(415, 240, 'Played by:')
         .drawText(680, 240, 'at')
         .fill(if blurColor then COLOR_BLUR else COLOR2)
-        .drawText(702, 240, score.dateUTC)
+        .drawText(702, 240, formatDate(score.date))
         .fontSize(20)
         .drawText(240, 240, beatmap.creator)
         .drawText(495, 240, score.username)
@@ -195,7 +197,7 @@ drawMod = (img, mod, i, totalSize) ->
 SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'rank', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
 isValidScoreObj = (obj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of obj
 
-BEATMAP_OBJ_REQ_PROPS = ['beatmapset_id', 'max_combo', 'title', 'artist', 'creator', 'version']
+BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> BEATMAP_OBJ_REQ_PROPS.every (x) -> x of obj
 
 drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
@@ -240,12 +242,6 @@ drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
 createOsuScoreBadge = (bgImg, beatmap, gameMode, score, id, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
-
-    try
-        # crazy hacky stuff to transform the osu-api date (which is in +8 timesone) to an UTC date, with the string " UTC" added to it
-        score.dateUTC = new Date(score.date.replace(' ', 'T')+'+08:00').toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
-    catch dateParseError
-        return done dateParseError
 
     try
         img = drawAllTheThings bgImg, beatmap, gameMode, score
