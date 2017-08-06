@@ -99,33 +99,32 @@ block content
                 .col-md-6.col-md-offset-3
                     p#map-display-comment Loading or whatever idk
                     p#map-display [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
-            #auto-beatmap-select
-                .form-group
-                    label.col-md-4.control-label(for='beatmap_url') Beatmap
-                    .col-md-4
-                        input#beatmap_url.form-control.input-md(type='text', placeholder='https://osu.ppy.sh/b/123456?m=0')
-                        span.help-block Enter the URL of a beatmap page
-                .form-group#beatmap-version-select
-                    label.col-md-4.control-label(for='beatmap_version') Difficulty
-                    .col-md-4
-                        select#beatmap_version.form-control
-                p.toggle-beatmap-selection-style.toggle-link: a(href='#'): small: em or enter beatmap-id and mode manually
-            #manual-beatmap-select
-                .form-group
-                    label.col-md-4.control-label(for='beatmap_id') Beatmap ID
-                    .col-md-4
-                        input#beatmap_id.form-control.input-md(name='beatmap_id', type='number', required=true, placeholder=123456)
-                        span.help-block The ID of the beatmap, not the beatmap-set!
-                .form-group
-                    label.col-md-4.control-label(for='mode') Gamemode
-                    .col-md-4
-                        select#mode.form-control(name='mode', required=true)
-                            option(value=0) osu!
-                            option(value=1) osu!taiko
-                            option(value=2) osu!catch
-                            option(value=3) osu!mania
-                        span.help-block Choose the game mode!
-                p.toggle-beatmap-selection-style.toggle-link: a(href='#'): small: em or enter beatmap by URL
+            .form-group
+                label.col-md-4.control-label(for='beatmap_url') Beatmap
+                .col-md-4
+                    input#beatmap_id(name='beatmap_id', type='hidden', required=true)
+                    input#beatmap_url.form-control.input-md(type='text', placeholder='https://osu.ppy.sh/b/12345?m=0 or 12345 or 123s')
+                    span.help-block Enter the URL of a beatmap page, or enter the ID of the beatmap (append an 's' to the ID for a set-ID)
+            .form-group#beatmap-version-select
+                label.col-md-4.control-label(for='beatmap_version') Difficulty
+                .col-md-4
+                    select#beatmap_version.form-control
+            .form-group
+                label.col-md-4.control-label(for='mode') Gamemode
+                .col-md-4
+                    .row
+                        .col-md-6
+                            .checkbox
+                                label
+                                    input#override-mode(type='checkbox')
+                                    | Override gamemode
+                        .col-md-6
+                            select#mode.form-control(name='mode')
+                                option(value=0) osu!
+                                option(value=1) osu!taiko
+                                option(value=2) osu!catch
+                                option(value=3) osu!mania
+                    span.help-block Use the default gamemode of the map, or set it yourself (eg. for converts)
         .form-group
             .col-md-4.col-md-offset-4
                 button#submit-btn.btn.btn-primary(type='submit') Create

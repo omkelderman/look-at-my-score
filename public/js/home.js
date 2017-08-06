@@ -42,8 +42,6 @@ var $sampleImg = $('#sample-img');
 var $imageCount = $('#image-count');
 var $chooseScoreBox = $('#choose-score');
 var $chooseScoreBtnGroup = $('#choose-score-btn-group');
-var $manualBeatmapSelect = $('#manual-beatmap-select');
-var $autoBeatmapSelect = $('#auto-beatmap-select');
 var $beatmapVersionSelect = $('#beatmap-version-select');
 var $manualScoreSelect = $('#manual-score-select');
 var $modsManualInput = $('#mods-manual-input');
@@ -77,6 +75,7 @@ var $inputBeatmapUrl = $('#beatmap_url');
 var $beatmapVersion = $('#beatmap_version');
 var $inputBeatmapId = $('#beatmap_id');
 var $inputMode = $('#mode');
+var $checkboxOverrideMode = $('#override-mode');
 
 var $inputScoreEnabledMods = $('#score_enabled_mods');
 
@@ -130,6 +129,32 @@ function fillScoresMenu(data) {
     }
 }
 
+function setOverrideGamemode(override) {
+    console.log('setOverrideGamemode', override);
+    $inputMode.prop('disabled', !override);
+    $inputMode.css('visibility', override ? 'visible' : 'hidden');
+
+    $checkboxOverrideMode.prop('checked', override);
+
+    if(override && $inputMode.val() == null) {
+        // go into override mode, but the selectbox has nothing selected, select previous value, or default to std
+        $inputMode.customSet($inputMode.data('prevValue') || '0');
+    }
+    if(!override) {
+        // go out of override mode, clear inputbox
+        $inputMode.data('prevValue', $inputMode.val());
+        $inputMode.customSet(null);
+    }
+}
+
+function getCurrentlySelectedGamemode() {
+    if($inputMode.prop('disabled')) {
+        return null;
+    } else {
+        return $inputMode.val();
+    }
+}
+
 $frm.submit(function(e) {
     e.preventDefault();
     $submitBtn.prop('disabled', true);
@@ -152,7 +177,6 @@ $frm.submit(function(e) {
             } else {
                 data[field.name] = field.value || null;
             }
-            console.log(i, field);
         });
     }
 
@@ -256,7 +280,6 @@ function displayResult(isOk) {
 }
 
 $goBackBtn.click(function(e) {
-    console.log('hahaha');
     e.preventDefault();
     $frm.slideDown();
     $result.slideUp();
@@ -270,7 +293,6 @@ function validateInput(e) {
     var inputIsValid = true;
 
     var $inputUsernameFormGroup = $inputUsername.parent().parent();
-    var $inputBeatmapIdFormGroup = $inputBeatmapId.parent().parent();
     var $inputModeFormGroup = $inputMode.parent().parent();
 
     var usernameInvalid = $inputUsername.val().length == 0;
@@ -283,15 +305,13 @@ function validateInput(e) {
     }
 
     var beatmapIdInvalid = !/^[0-9]+$/.test($inputBeatmapId.val());
-    if(e.currentTarget == $inputBeatmapId[0]) {
-        $inputBeatmapIdFormGroup.toggleClass('has-error', beatmapIdInvalid);
-    }
     if(beatmapIdInvalid) {
         // beatmap id can only contain numbers
         inputIsValid = false;
     }
 
-    var modeInvalid = $inputMode.val() < 0 || $inputMode.val() > 4;
+    var mode = getCurrentlySelectedGamemode();
+    var modeInvalid = (mode != null) && (mode < 0 || mode > 4);
     if(e.currentTarget == $inputMode[0]) {
         $inputModeFormGroup.toggleClass('has-error', modeInvalid);
     }
@@ -310,32 +330,21 @@ function validateInput(e) {
     $submitBtn.prop('disabled', !inputIsValid);
 }
 
-function clearUrlInputAndValidateInput(e) {
-    if($inputBeatmapUrl.is(':hidden')) {
-        // we're doing manual input, clear the url input
-        $inputBeatmapUrl.customSet('', true);
-    }
-
-    // and validate ofc
-    validateInput(e);
-}
-
 // listen to a shitton of events to make sure we catch every change as early as possible
 $inputUsername.allInputUpdate(validateInput);
-$inputBeatmapId.allInputUpdate(clearUrlInputAndValidateInput);
-$inputMode.allInputUpdate(clearUrlInputAndValidateInput);
+$inputMode.allInputUpdate(validateInput);
 $inputBeatmapUrl.allInputUpdate(function(e) {
-    var value = parseBeatmapUrl($inputBeatmapUrl.val());
+    var value = parseBeatmapUrl($inputBeatmapUrl.val().trim());
     $inputBeatmapUrl.parent().parent().toggleClass('has-error', !value.isValid);
     if(value.isValid) {
         if(value.s) {
             // its a /s/ url, need extra info!
-            console.log('s-url', value);
+            console.log('input-result: s-url', value);
             $beatmapVersionSelect.slideDown();
             handleSetUrl(value.s);
         } else {
             // hype, URL is parsed!
-            console.log('valid input:', value);
+            console.log('input-result: valid input:', value);
             setBeatmapAndModeInput(e, value.b, value.m);
             $beatmapVersionSelect.slideUp();
 
@@ -343,7 +352,7 @@ $inputBeatmapUrl.allInputUpdate(function(e) {
             return;
         }
     } else {
-        console.log('error', value);
+        console.log('input-result: error', value);
         $beatmapVersionSelect.slideUp();
     }
 
@@ -352,15 +361,7 @@ $inputBeatmapUrl.allInputUpdate(function(e) {
     setBeatmapAndModeInput(e);
 });
 $beatmapVersion.allInputUpdate(function(e) {
-    var value = $beatmapVersion.val().split('|');
-    if(value.length != 2) {
-        // not found or error
-        setBeatmapAndModeInput(e);
-        return;
-    }
-
-    // found
-    setBeatmapAndModeInput(e, value[0], value[1]);
+    setBeatmapAndModeInput(e, $beatmapVersion.val(), null);
 });
 
 // custom detect change handler
@@ -372,17 +373,19 @@ $beatmapVersion.allInputUpdate(function(e) {
 function setBeatmapAndModeInput(e, b, m) {
     var oldB = $inputBeatmapId.val();
     var oldM = $inputMode.val();
-    if(oldB === b && oldM === m) {
+    if(oldB == b && oldM == m) {
         // nothing has changed
         return;
     }
 
     // change detected!
     $inputBeatmapId.customSet(b || '', true);
-    $inputMode.customSet(m || '0', true);
+    $inputMode.customSet(m, true);
+    // disable or enable override gamemode
+    setOverrideGamemode(m != null);
 
     // manually fire the change event handler
-    clearUrlInputAndValidateInput(e);
+    validateInput(e);
 }
 
 var handleSetUrlTimeout = -1;
@@ -397,7 +400,6 @@ function handleSetUrl(s) {
 }
 
 function handleSetUrlForReal(s) {
-    console.log('DO IT', s);
     $.ajax({
         type: 'get',
         url: '/api/diffs/' + s,
@@ -405,6 +407,7 @@ function handleSetUrlForReal(s) {
             if($beatmapVersion.data('setId') != s) return;
             $inputBeatmapUrl.parent().parent().toggleClass('has-error', false);
             $beatmapVersion.empty();
+            $beatmapVersion.customSet(null);
             for(var i=0, _len = data.set.length; i<_len; ++i) {
                 var version = data.set[i];
                 var text = version.version;
@@ -413,7 +416,7 @@ function handleSetUrlForReal(s) {
                 }
                 var $option = $('<option>')
                     .text(text)
-                    .attr('value', version.beatmap_id + '|' + version.mode)
+                    .attr('value', version.beatmap_id)
                     .attr('selected', version.beatmap_id == data.defaultVersion);
                 $beatmapVersion.append($option);
             }
@@ -434,7 +437,7 @@ function handleSetUrlForReal(s) {
         },
         complete: function() {
             if($beatmapVersion.data('setId') != s) return;
-            console.log('complete', s);
+            console.log('loaded s result', s);
             $beatmapVersion.trigger('change');
         }
     });
@@ -448,13 +451,26 @@ function parseBeatmapUrl(string) {
             error: 'empty'
         };
     }
+    var obj;
+
+    // lala
+    var onlyIdResult = /^([0-9]+)(s)?$/.exec(string);
+    if(onlyIdResult) {
+        obj = {
+            isValid: true,
+            m: null
+        };
+        // $2 contains either an s or nothing :D
+        obj[onlyIdResult[2] || 'b'] = onlyIdResult[1];
+        return obj;
+    }
 
     // [http[s]://]osu.ppy.sh/[b|s]/123456[[?|&]m=0]
     var oldSite1Result = /^(?:https?\:\/\/)?osu\.ppy\.sh\/(b|s)\/([0-9]+)(?:(?:\?|&)m=([0-3]))?$/.exec(string);
     if(oldSite1Result) {
-        var obj = {
+        obj = {
             isValid: true,
-            m: oldSite1Result[3] || '0'
+            m: oldSite1Result[3]
         };
         obj[oldSite1Result[1]] = oldSite1Result[2];
         return obj;
@@ -466,7 +482,7 @@ function parseBeatmapUrl(string) {
         return {
             isValid: true,
             b: oldSite2Result[1],
-            m: oldSite2Result[2] || '0'
+            m: oldSite2Result[2]
         };
     }
 
@@ -486,11 +502,6 @@ function parseBeatmapUrl(string) {
     };
 }
 
-$('.toggle-beatmap-selection-style > a').click(function(e){
-    e.preventDefault();
-    $manualBeatmapSelect.slideToggle();
-    $autoBeatmapSelect.slideToggle();
-});
 $('#toggle-manual-score-select > a').click(function(e){
     e.preventDefault();
     $manualScoreSelect.slideToggle(updateManualSelectInputs);
@@ -544,33 +555,58 @@ $('#sample-img a.dismiss').click(function(e){
     $sampleImg.slideUp();
 });
 
+function hideMapDisplay() {
+    $mapDisplayComment.hide();
+    $mapDisplay.hide();
+}
+
+var handleLoadMapDisplayTimeout = -1;
 function loadMapDisplay() {
     console.log('load map display requested');
-    var oldB = $mapDisplay.data('b');
-    var oldM = $mapDisplay.data('m');
 
     var b = $inputBeatmapId.val();
-    var m = $inputMode.val();
-
-    if(oldB === b && oldM === m) {
+    var m = getCurrentlySelectedGamemode();
+    var url = '/api/beatmap/' + b;
+    if(m) {
+        url += '/' + m;
+    }
+    if(url == $mapDisplay.data('loadedUrl')) {
         // display already contains correct data :D
-        console.log('HYPU');
+        console.log('show already loaded mapdisplay', url);
         showMapDisplay();
         return;
     }
 
+    // display does not contain correct data, needs update
+    console.log('load mapdisplay', url);
     updateAndShowMapDisplayComment('loading...');
+    $mapDisplay.data('toBeLoadedUrl', url);
+    clearTimeout(handleLoadMapDisplayTimeout);
+    handleLoadMapDisplayTimeout = setTimeout(function() {
+        loadMapDisplayForReal(url);
+    }, 250);
+}
+
+// only allowed to be called from within loadMapDisplay
+function loadMapDisplayForReal(url) {
     $.ajax({
         type: 'get',
-        url: '/api/beatmap/' + b + '-' + m,
+        url: url,
         success: function(data) {
-            showMapDisplay(data);
-            $mapDisplay.data('b', b);
-            $mapDisplay.data('m', m);
+            if($mapDisplay.data('toBeLoadedUrl') != url) {
+                // state has changed, do not display data
+                return;
+            }
+            updateMapDisplayData(url, data);
+            showMapDisplay();
+            // if gamemode input box is disabled (aka custom gamemode is off) set the gamemode
+            if($inputMode.prop('disabled')) {
+                $inputMode.customSet(data.mode, true);
+            }
         },
         error: function(jqXHR) {
-            if(b != $inputBeatmapId.val() || m != $inputMode.val()) {
-                // state has changed, do not display error
+            if($mapDisplay.data('toBeLoadedUrl') != url) {
+                // state has changed, do not display data
                 return;
             }
             var error = jqXHR.responseJSON;
@@ -583,34 +619,38 @@ function loadMapDisplay() {
     });
 }
 
-function showMapDisplay(data) {
-    if(data) {
-        $mapDisplayMode.text(MODES[data.mode]);
-        $mapDisplayModeComment.text(data.converted ? ' (converted)' : '');
-        $mapDisplayArtist.text(data.artist);
-        $mapDisplayTitle.text(data.title);
-        $mapDisplayVersion.text(data.version);
-        $mapDisplayCreator.text(data.creator);
-    }
+// only allowed to be called from within loadMapDisplayForReal
+function updateMapDisplayData(url, data) {
+    $mapDisplay.data('loadedUrl', url);
+
+    $mapDisplayMode.text(MODES[data.mode]);
+    $mapDisplayModeComment.text(data.converted ? ' (converted)' : '');
+    $mapDisplayArtist.text(data.artist);
+    $mapDisplayTitle.text(data.title);
+    $mapDisplayVersion.text(data.version);
+    $mapDisplayCreator.text(data.creator);
+}
+
+// only allowed to be called from within loadMapDisplay/loadMapDisplayForReal
+function showMapDisplay() {
     $mapDisplayComment.hide();
     $mapDisplay.show();
 }
 
+// only allowed to be called from within loadMapDisplay/loadMapDisplayForReal
 function updateAndShowMapDisplayComment(message) {
     $mapDisplayComment.text(message);
     $mapDisplay.hide();
     $mapDisplayComment.show();
 }
 
-function hideMapDisplay() {
-    $mapDisplayComment.hide();
-    $mapDisplay.hide();
-}
+$checkboxOverrideMode.change(function() {
+    setOverrideGamemode(this.checked);
+});
 
 $(document).ready(function() {
     $result.hide();
     $chooseScoreBox.hide();
-    $manualBeatmapSelect.hide();
     $beatmapVersionSelect.hide();
     $manualScoreSelect.hide();
     $modsManualInput.hide();
@@ -620,4 +660,6 @@ $(document).ready(function() {
     startImageCounterUpdate();
     initManualSelectInputs();
     updateManualSelectInputs();
+    setOverrideGamemode(false);
+    $inputMode.customSet(null);
 });

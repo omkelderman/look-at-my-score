@@ -7,8 +7,8 @@ API_KEY = config.get 'osu-api-key'
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
 
-doApiRequest = (endpoint, params, done, extraCacheAction) -> doApiRequestModifyResult endpoint, params, null, done, extraCacheAction
-doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, extraCacheAction) ->
+doApiRequest = (endpoint, params, done, customCacheAction) -> doApiRequestModifyResult endpoint, params, null, done, customCacheAction
+doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, customCacheAction) ->
     cacheKey = buildCacheKey endpoint, params
     await RedisCache.get cacheKey, defer err, cachedResult
     return done err if err
@@ -25,47 +25,81 @@ doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, extraCa
         return done
             message: 'osu api error'
             detail: 'osu api did not respond with http 200 OK response'
+    if not body
+        return done
+            message: 'osu api error'
+            detail: 'osu api response was invalid'
 
     modifyResultHandler body, false if modifyResultHandler
 
     # all gud, lets give it back right now, no need to wait for redis right
     done null, body
 
-    # also store it in cache
-    RedisCache.storeInCache CACHE_TIMES[endpoint], cacheKey, body
-
-    if extraCacheAction and body isnt null
-        extraCacheAction body, (forgedParams, forgedValue) ->
+    # if customCacheAction, caller is responsible for storing the value in cache
+    if customCacheAction
+        delete params.k
+        customCacheAction body, params, (forgedParams, forgedValue) ->
             forgedKey = buildCacheKey endpoint, forgedParams
             RedisCache.storeInCache CACHE_TIMES[endpoint], forgedKey, forgedValue
+    else
+        RedisCache.storeInCache CACHE_TIMES[endpoint], cacheKey, body
 
-doApiRequestAndGetFirst = (endpoint, params, done, extraCacheAction) ->
+doApiRequestAndGetFirst = (endpoint, params, done, customCacheAction) ->
     doApiRequest endpoint, params
     , (err, result) ->
         return done err if err
         return done null, null if result is null
         done null, result[0]
-    , extraCacheAction
+    , customCacheAction
+
+saveCustomCacheForBeatmapObject = (b, saveCallback) ->
+    saveCallback {b:b.beatmap_id, m:b.mode, a:1}, [b]
+    saveCallback {h:b.file_md5, m:b.mode, a:1}, [b]
+    saveCallback {b:b.beatmap_id, a:1}, [b]
+    saveCallback {h:b.file_md5, a:1}, [b]
+
+customCacheActionForGetBeatmap = (value, originalParams, saveCallback) ->
+    if value.length is 0
+        # empty response, just store, nothing special to do
+        return saveCallback originalParams, value
+
+    b = value[0]
+    if originalParams.hasOwnProperty 'm'
+        # mode was supplied, store with supplied mode for hash and id
+        saveCallback {b:b.beatmap_id, m:originalParams.m, a:1}, value
+        saveCallback {h:b.file_md5, m:originalParams.m, a:1}, value
+
+        # if not a convert, store also without mode supplied
+        if `originalParams.m == b.mode`
+            saveCallback {b:b.beatmap_id, a:1}, value
+            saveCallback {h:b.file_md5, a:1}, value
+    else
+        # mode was not supplied, store all 4 variants (with and without mode, id and hash)
+        saveCustomCacheForBeatmapObject b, saveCallback
 
 module.exports.getBeatmap = (id, mode, done) ->
-    doApiRequestAndGetFirst 'get_beatmaps', {b:id, m:mode, a:1}, done, (value, saveCallback) ->
-        return if value.length != 1
-        # create forged cache entry with same value, but with the hash as param
-        saveCallback {h:value[0].file_md5, m:mode, a:1}, value
+    options =
+        b:id
+        a:1
+    if mode?
+        options.m = mode
+    doApiRequestAndGetFirst 'get_beatmaps', options, done, customCacheActionForGetBeatmap
 
 module.exports.getBeatmapByHash = (hash, mode, done) ->
-    doApiRequestAndGetFirst 'get_beatmaps', {h:hash, m:mode, a:1}, done, (value, saveCallback) ->
-        return if value.length != 1
-        # create forged cache entry with same value, but with the beatmap-id as param
-        saveCallback {b:value[0].beatmap_id, m:mode, a:1}, value
+    options =
+        h:hash
+        a:1
+    if mode?
+        options.m = mode
+    doApiRequestAndGetFirst 'get_beatmaps', options, done, customCacheActionForGetBeatmap
 
 module.exports.getBeatmapSet = (id, done) ->
-    doApiRequest 'get_beatmaps', {s:id}, done, (value, saveCallback) ->
+    doApiRequest 'get_beatmaps', {s:id}, done, (value, originalParams, saveCallback) ->
+        # we are now responsible for storing the valuy in cache
+        saveCallback originalParams, value
+
         # create forged cache entries for each diff as if a per-diff-api call was done
-        # we have the data so why not, can potentially be less api calls made :D
-        for b in value
-            saveCallback {b:b.beatmap_id, m:b.mode, a:1}, [b]
-            saveCallback {h:b.file_md5, m:b.mode, a:1}, [b]
+        saveCustomCacheForBeatmapObject b, saveCallback for b in value
 
 module.exports.getScores = (beatmapId, mode, username, done) ->
     doApiRequestModifyResult 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}

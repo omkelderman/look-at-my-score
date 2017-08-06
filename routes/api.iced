@@ -47,11 +47,18 @@ router.get '/test', (req, res, next) ->
 
 router.post '/submit', (req, res, next) ->
     # required:
-    #  - mode
     #  - beatmap_id  OR   beatmap
     #  - username    OR   score
-    if not((req.body.beatmap_id? or req.body.beatmap?) and req.body.mode? and (req.body.username? or req.body.score?))
-        return next badRequest 'Invalid request: missing parameters'
+    # only required if beatmap is supplied instead of beatmap_id, altho it is ofc always possible to override (for converts):
+    #  - mode
+    if not(req.body.beatmap_id? or req.body.beatmap?)
+        return next badRequest 'missing either beatmap_id or beatmap object'
+
+    if not(req.body.username? or req.body.score?)
+        return next badRequest 'missing either username or score object'
+
+    if req.body.beatmap? and not req.body.mode
+        return next badRequest 'when using custom beatmap object, mode is required'
 
     gameMode = req.body.mode
 
@@ -62,7 +69,12 @@ router.post '/submit', (req, res, next) ->
         return next err if err
         if not beatmap
             return next notFound 'beatmap does not exist'
+
+        if not gameMode?
+            # mode was not supplied, get it from beatmap object
+            gameMode = beatmap.mode
     else
+        # no beatmap_id, so beatmap object must be supplied
         return next badRequest 'beatmap parameters not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.beatmap
         beatmap = req.body.beatmap
 
@@ -86,6 +98,7 @@ router.post '/submit', (req, res, next) ->
 
         score = scores[0]
     else
+        # no username, so score object must be supplied
         return next badRequest 'score parameters not valid' if not OsuScoreBadgeCreator.isValidScoreObj req.body.score
         score = req.body.score
         score.date = convertDateStringToDateObject score.date
@@ -145,7 +158,7 @@ router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
         defaultVersion: getDefaultFromSet set
         set: set
 
-router.get '/beatmap/:beatmap_id([0-9]+)-:mode([0-3])', (req, res, next) ->
+beatmapHandler = (req, res, next) ->
     beatmapId = req.params.beatmap_id
     mode = req.params.mode
     await OsuApi.getBeatmap beatmapId, mode, defer err, beatmap
@@ -153,12 +166,15 @@ router.get '/beatmap/:beatmap_id([0-9]+)-:mode([0-3])', (req, res, next) ->
     return next notFound 'no beatmap found with that id' if not beatmap
 
     res.json
-        mode: mode
-        converted: beatmap.mode != mode
+        beatmapId: beatmapId
+        mode: mode || beatmap.mode
+        converted: mode? and (beatmap.mode isnt mode)
         title: beatmap.title
         artist: beatmap.artist
         version: beatmap.version
         creator: beatmap.creator
+router.get '/beatmap/:beatmap_id([0-9]+)/:mode([0-3])', beatmapHandler
+router.get '/beatmap/:beatmap_id([0-9]+)', beatmapHandler
 
 # not found? gen 404
 router.use (req, res, next) ->
