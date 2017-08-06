@@ -95,10 +95,8 @@ block content
             p#toggle-manual-score-select.toggle-link: a(href='#'): small: em enter score-details manually (advanced)
         fieldset
             legend What?
-            .row
-                .col-md-6.col-md-offset-3
-                    p#map-display-comment Loading or whatever idk
-                    p#map-display [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
+            p#map-display-comment
+            p#map-display [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
             .form-group
                 label.col-md-4.control-label(for='beatmap_url') Beatmap
                 .col-md-4
