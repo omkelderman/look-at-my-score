@@ -200,7 +200,7 @@ isValidScoreObj = (obj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of obj
 BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> BEATMAP_OBJ_REQ_PROPS.every (x) -> x of obj
 
-drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
+createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
     # start
     img = gm bgImg
 
@@ -215,6 +215,8 @@ drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
 
     # draw all the text again, but now for real
     drawAllTheText img, beatmap, gameMode, score, false
+
+    # img.draw 'la'
 
     # lets draw some additional bits
     enabled_mods = +score.enabled_mods
@@ -239,33 +241,18 @@ drawAllTheThings = (bgImg, beatmap, gameMode, score) ->
 # input objects must be "correct"
 # check with isValidScoreObj/isValidBeatmapObj
 # otherwise shit will fail
-createOsuScoreBadge = (bgImg, beatmap, gameMode, score, id, done) ->
+createOsuScoreBadge = (bgImg, beatmap, gameMode, score, outputFile, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
 
     try
-        img = drawAllTheThings bgImg, beatmap, gameMode, score
+        img = createGmDrawCommandChain bgImg, beatmap, gameMode, score
     catch imgCreateError
         return done imgCreateError
 
-    outputFileStart = path.resolve PathConstants.dataDir, id
 
     # write png file
-    await img.write outputFileStart+'.png', defer err
-    return done err if err
-
-    # also write a json-file with the meta-data
-    outputData =
-        date: new Date().toISOString()
-        id: id
-        mode: gameMode
-        beatmap: beatmap
-        score: score
-    await fs.writeFile outputFileStart+'.json', JSON.stringify(outputData), defer err
-    return done err if err
-
-    # hype, we're done
-    return done()
+    img.write outputFile, done
 
 getGeneratedImagesAmount = (done) ->
     await RedisCache.get 'image-count', defer err, cachedResult

@@ -13,6 +13,7 @@ http:
 dirs:
     data: data
     coverCache: coverCache
+    tmp: tmp
 
 redis:
     host: localhost

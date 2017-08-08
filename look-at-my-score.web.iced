@@ -12,6 +12,7 @@ PathConstants = require './PathConstants'
 # ensure data-dir/coverCache-dir exists
 fs.mkdirSync PathConstants.dataDir if not fs.existsSync PathConstants.dataDir
 fs.mkdirSync PathConstants.coverCacheDir if not fs.existsSync PathConstants.coverCacheDir
+fs.mkdirSync PathConstants.tmpDir if not fs.existsSync PathConstants.tmpDir
 
 # redis
 redisConfig = config.get 'redis'

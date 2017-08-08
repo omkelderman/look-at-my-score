@@ -6,6 +6,9 @@ CoverCache = require '../CoverCache'
 OsuMods = require '../OsuMods'
 OsuAcc = require '../OsuAcc'
 uuidV4 = require 'uuid/v4'
+path = require 'path'
+fs = require 'fs'
+PathConstants = require '../PathConstants'
 
 MYSQL_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
 ISO_UTC_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/
@@ -110,10 +113,34 @@ router.post '/submit', (req, res, next) ->
 
     # create the thing :D
     imageId = uuidV4()
-    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, imageId, defer err
+    tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
+
+    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
+    if err
+        # img gen failed, lets imidiately return
+        next err # TODO: custom error object
+        # TODO: do something with err, stdout, stderr, gmCommand
+        return
+
+    console.log 'CREATED:', tmpPngLocation
+
+    # img created, now move to correct location
+    pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'
+    await fs.rename tmpPngLocation, pngLocation, defer err
     return next err if err
-    console.log 'CREATED:', imageId
-    url = config.get 'image-result-url'
+
+    # also write a json-file with the meta-data
+    jsonLocation = path.resolve PathConstants.dataDir, imageId + '.json'
+    outputData =
+        date: new Date().toISOString()
+        id: imageId
+        mode: gameMode
+        beatmap: beatmap
+        score: score
+    await fs.writeFile jsonLocation, JSON.stringify(outputData), defer err
+    return done err if err
+
+    resultUrl = config.get 'image-result-url'
         .replace '{protocol}', req.protocol
         .replace '{host}', req.get 'host'
         .replace '{image-id}', imageId
@@ -122,7 +149,7 @@ router.post '/submit', (req, res, next) ->
         result: 'image'
         image:
             id: imageId
-            url: url
+            url: resultUrl
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
