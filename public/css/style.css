@@ -135,11 +135,11 @@ hr.dark {
     text-shadow: 0px 0px 20px #000;
 }
 
-#error-header, #error-text {
+#result-error-header, #result-error-text, .is-error-message {
     color: #ff0033;
 }
 
-#error-header {
+#result-error-header {
     font-weight: bold;
     font-size: 22px;
 }

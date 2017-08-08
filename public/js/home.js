@@ -55,7 +55,7 @@ var $resultError = $('#result-error');
 var $resultImg = $('#result-img');
 var $progressBar = $('#progress-bar');
 var $resultText = $('#result-text');
-var $errorText = $('#error-text');
+var $resultErrorText = $('#result-error-text');
 var $goBackBtn = $('#go-back-btn');
 var $contactMe = $('#contact-me');
 
@@ -73,6 +73,7 @@ var $mapDisplayCreator = $('#map-creator');
 var $inputUsername = $('#username');
 var $inputBeatmapUrl = $('#beatmap_url');
 var $beatmapVersion = $('#beatmap_version');
+var $beatmapVersionMessage = $('#beatmap_version_message');
 var $inputBeatmapId = $('#beatmap_id');
 var $inputMode = $('#mode');
 var $checkboxOverrideMode = $('#override-mode');
@@ -231,7 +232,7 @@ function doThaThing(data) {
             } else {
                 displayResult(false);
                 console.log('ERROR: unexpected result:', data.result);
-                $errorText.text('If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
+                $resultErrorText.text('If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
                 $contactMe.attr('href', '/contact?error=non-implemented-resulti&result=' + data.result);
             }
         },
@@ -248,14 +249,17 @@ function doThaThing(data) {
                 case 400:
                     errorText = 'Invalid data: ' + error.detailMessage;
                     break;
+                case 502:
+                    errorText = 'Something didn\'t quite go as planned...: ' + error.detailMessage;
+                    break;
                 default:
                     errorText = 'I\'m sorry, something went wrong... The server reported: ' + error.detailMessage;
                     break;
                 }
-                $errorText.text(errorText);
+                $resultErrorText.text(errorText);
                 $contactMe.attr('href', '/contact?error=' + error.status);
             } else {
-                $errorText.text('I\'m sorry, something went wrong...');
+                $resultErrorText.text('I\'m sorry, something went wrong...');
                 $contactMe.attr('href', '/contact?error=unknown');
             }
         },
@@ -391,7 +395,9 @@ function setBeatmapAndModeInput(e, b, m) {
 var handleSetUrlTimeout = -1;
 function handleSetUrl(s) {
     $beatmapVersion.empty();
-    $beatmapVersion.append($('<option>').text('loading...'));
+    $beatmapVersion.customSet(null);
+    // $beatmapVersion.append($('<option>').text('loading...'));
+    updateBeatmapVersionMessage('loading...');
     $beatmapVersion.data('setId', s);
     clearTimeout(handleSetUrlTimeout);
     handleSetUrlTimeout = setTimeout(function() {
@@ -420,20 +426,27 @@ function handleSetUrlForReal(s) {
                     .attr('selected', version.beatmap_id == data.defaultVersion);
                 $beatmapVersion.append($option);
             }
+            updateBeatmapVersionMessage();
         },
         error: function(jqXHR) {
             if($beatmapVersion.data('setId') != s) return;
             var error = jqXHR.responseJSON;
             $inputBeatmapUrl.parent().parent().toggleClass('has-error', true);
             $beatmapVersion.empty();
-            var $option;
-            if(error.status == 404) {
-                $option = $('<option>').text('Beatmap not found...');
-            } else {
-                $option = $('<option>').text('Something went wrong...');
+            $beatmapVersion.customSet(null);
+            var errorText;
+            switch((error && error.status) || 0) {
+            case 404:
+                errorText = 'Beatmap not found...';
+                break;
+            case 502:
+                errorText = 'Error while retrieving data: ' + error.detailMessage;
+                break;
+            default:
+                errorText = 'Something went wrong...';
+                break;
             }
-            $option.attr('value', '');
-            $beatmapVersion.append($option);
+            updateBeatmapVersionMessage(errorText, true);
         },
         complete: function() {
             if($beatmapVersion.data('setId') != s) return;
@@ -441,6 +454,16 @@ function handleSetUrlForReal(s) {
             $beatmapVersion.trigger('change');
         }
     });
+}
+
+function updateBeatmapVersionMessage(message, isError) {
+    if(message) {
+        $beatmapVersionMessage.text(message).toggleClass('is-error-message', isError || false).show();
+        $beatmapVersion.hide();
+    } else {
+        $beatmapVersionMessage.text('').removeClass('is-error-message').hide();
+        $beatmapVersion.show();
+    }
 }
 
 function parseBeatmapUrl(string) {
@@ -610,10 +633,16 @@ function loadMapDisplayForReal(url) {
                 return;
             }
             var error = jqXHR.responseJSON;
-            if(error.status == 404) {
-                updateAndShowMapDisplayComment('Beatmap not found!');
-            } else {
-                updateAndShowMapDisplayComment('Something went wrong...');
+            switch((error && error.status) || 0) {
+            case 404:
+                updateAndShowMapDisplayComment('Beatmap not found!', true);
+                break;
+            case 502:
+                updateAndShowMapDisplayComment('Error while retrieving data: ' + error.detailMessage, true);
+                break;
+            default:
+                updateAndShowMapDisplayComment('Something went wrong...', true);
+                break;
             }
         }
     });
@@ -638,10 +667,9 @@ function showMapDisplay() {
 }
 
 // only allowed to be called from within loadMapDisplay/loadMapDisplayForReal
-function updateAndShowMapDisplayComment(message) {
-    $mapDisplayComment.text(message);
+function updateAndShowMapDisplayComment(message, isError) {
     $mapDisplay.hide();
-    $mapDisplayComment.show();
+    $mapDisplayComment.text(message).toggleClass('is-error-message', isError || false).show();
 }
 
 $checkboxOverrideMode.change(function() {

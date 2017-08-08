@@ -107,6 +107,7 @@ block content
                 label.col-md-4.control-label(for='beatmap_version') Difficulty
                 .col-md-4
                     select#beatmap_version.form-control
+                    #beatmap_version_message
             .form-group
                 label.col-md-4.control-label(for='mode') Gamemode
                 .col-md-4
@@ -139,8 +140,8 @@ block content
                     span.input-group-addon Result:
                     input#result-text.form-control(type='text')
                 #result-error.row
-                    #error-header.col-md-1 Error
-                    #error-text.col-md-11.text-center
+                    #result-error-header.col-md-1 Error
+                    #result-error-text.col-md-11.text-center
             .col-md-2#back-btn-col
                 button#go-back-btn.btn.btn-primary(type='button') Go Back
         p.text-center.sidenote: small: em Anything not looking like it should? #[a#contact-me(href='/contact') Contact me!]
