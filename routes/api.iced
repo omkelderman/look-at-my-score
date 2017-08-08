@@ -41,6 +41,12 @@ convertDateStringToDateObject = (str) ->
 
 notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
 badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
+badGateway = (message) -> { detail: message, status: 400, message: 'Bad Gateway' }
+internalServerError = (message) -> { detail: message, status: 400, message: 'Internal Server Error' }
+
+handleOsuApiServerError = (err, nextHandler) ->
+    console.error 'Error while comunicating with osu server', err
+    nextHandler badGateway 'osu server superslow or unavailable'
 
 router = express.Router()
 
@@ -69,9 +75,8 @@ router.post '/submit', (req, res, next) ->
     if req.body.beatmap_id?
         # get beatmap
         await OsuApi.getBeatmap req.body.beatmap_id, gameMode, defer err, beatmap
-        return next err if err
-        if not beatmap
-            return next notFound 'beatmap does not exist'
+        return handleOsuApiServerError err, next if err
+        return next notFound 'beatmap does not exist' if not beatmap
 
         if not gameMode?
             # mode was not supplied, get it from beatmap object
@@ -84,7 +89,7 @@ router.post '/submit', (req, res, next) ->
     # get score
     if req.body.username?
         await OsuApi.getScores beatmap.beatmap_id, gameMode, req.body.username, defer err, scores
-        return next err if err
+        return handleOsuApiServerError err, next if err
         if not scores or scores.length is 0
             return next notFound 'user does not exist, or does not have a score on the selected beatmap'
 
@@ -109,7 +114,16 @@ router.post '/submit', (req, res, next) ->
 
     # grab the new.ppy.sh cover of the beatmap to start with
     await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
-    return next err if err
+    if err
+        # TODO: proper error logging
+        if err.path
+            # its a file system error
+            console.error 'Error while saving cover jpg to disk', err
+            return next internalServerError 'error while saving cover jpg to disk'
+
+        # else its a network error, aka osu server (if mine then website wouldnt work lol)
+        console.error 'Error while retrieving cover jpg from osu servers'
+        return next badGateway 'error while retrieving cover jpg from osu servers'
 
     # create the thing :D
     imageId = uuidV4()
@@ -118,16 +132,19 @@ router.post '/submit', (req, res, next) ->
     await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
     if err
         # img gen failed, lets imidiately return
-        next err # TODO: custom error object
-        # TODO: do something with err, stdout, stderr, gmCommand
-        return
+        # TODO: proper error logging (and do something with err, stdout, stderr, gmCommand)
+        console.error 'Error while generating image', err, stdout, stderr, gmCommand
+        return next internalServerError 'error while generating image'
 
     console.log 'CREATED:', tmpPngLocation
 
     # img created, now move to correct location
     pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'
     await fs.rename tmpPngLocation, pngLocation, defer err
-    return next err if err
+    if err
+        # TODO: proper error logging
+        console.error 'Error while moving png file', err
+        return done internalServerError 'error while moving png file'
 
     # also write a json-file with the meta-data
     jsonLocation = path.resolve PathConstants.dataDir, imageId + '.json'
@@ -138,7 +155,10 @@ router.post '/submit', (req, res, next) ->
         beatmap: beatmap
         score: score
     await fs.writeFile jsonLocation, JSON.stringify(outputData), defer err
-    return done err if err
+    if err
+        # TODO: proper error logging
+        console.error 'Error while writing json file to disk', err
+        return done internalServerError 'error while writing json file to disk'
 
     resultUrl = config.get 'image-result-url'
         .replace '{protocol}', req.protocol
@@ -153,7 +173,10 @@ router.post '/submit', (req, res, next) ->
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
-    return next err if err
+    if err
+        # TODO: proper error logging
+        console.error 'Error while retrieving image count', err
+        return next internalServerError 'error while retrieving image count'
     res.json imagesAmount
 
 getDefaultFromSet = (set) ->
@@ -172,7 +195,7 @@ getDefaultFromSet = (set) ->
 router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
     setId = req.params.set_id
     await OsuApi.getBeatmapSet setId, defer err, set
-    return next err if err
+    return handleOsuApiServerError err, next if err
 
     if not set or set.length is 0
         return next notFound 'no beatmap-set found with that id'
@@ -189,7 +212,7 @@ beatmapHandler = (req, res, next) ->
     beatmapId = req.params.beatmap_id
     mode = req.params.mode
     await OsuApi.getBeatmap beatmapId, mode, defer err, beatmap
-    return next err if err
+    return handleOsuApiServerError err, next if err
     return next notFound 'no beatmap found with that id' if not beatmap
 
     res.json
