@@ -41,8 +41,8 @@ convertDateStringToDateObject = (str) ->
 
 notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
 badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
-badGateway = (message) -> { detail: message, status: 400, message: 'Bad Gateway' }
-internalServerError = (message) -> { detail: message, status: 400, message: 'Internal Server Error' }
+badGateway = (message) -> { detail: message, status: 502, message: 'Bad Gateway' }
+internalServerError = (message) -> { detail: message, status: 500, message: 'Internal Server Error' }
 
 handleOsuApiServerError = (err, nextHandler) ->
     console.error 'Error while comunicating with osu server', err
