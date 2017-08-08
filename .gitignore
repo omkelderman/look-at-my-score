@@ -105,6 +105,7 @@ config/local-*.yml
 # data dir
 data/
 coverCache/
+tmp/
 
 # test file
 test.iced
