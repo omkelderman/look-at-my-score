@@ -10,9 +10,8 @@ buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.creat
 doApiRequest = (endpoint, params, done, customCacheAction) -> doApiRequestModifyResult endpoint, params, null, done, customCacheAction
 doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, customCacheAction) ->
     cacheKey = buildCacheKey endpoint, params
-    await RedisCache.get cacheKey, defer err, cachedResult
-    return done err if err
-    if cachedResult # yay cache exists
+    await RedisCache.get cacheKey, defer isInCache, cachedResult
+    if isInCache # yay cache exists
         modifyResultHandler cachedResult, true if modifyResultHandler
         return done null, cachedResult
 
