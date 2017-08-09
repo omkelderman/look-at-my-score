@@ -119,6 +119,11 @@ strong.hype {
     color: #ff66aa;
 }
 
+#map-display-image {
+    width: 300px;
+    margin-bottom: 10px;
+}
+
 hr.dark {
     margin-bottom: 5px;
     border-color: #333;

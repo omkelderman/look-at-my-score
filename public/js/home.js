@@ -61,6 +61,7 @@ var $contactMe = $('#contact-me');
 
 // map display
 var $mapDisplayComment = $('#map-display-comment');
+var $mapDisplayImage = $('#map-display-image');
 var $mapDisplay = $('#map-display');
 var $mapDisplayMode = $('#map-mode');
 var $mapDisplayModeComment = $('#map-mode-comment');
@@ -334,10 +335,20 @@ function validateInput(e) {
     $submitBtn.prop('disabled', !inputIsValid);
 }
 
+function showOrHideMapDisplayImage(s) {
+    console.log('request cover img', s);
+    if(s) {
+        $mapDisplayImage.attr('src', '/cover/' + s + '.jpg').show();
+    } else {
+        $mapDisplayImage.attr('src', '').hide();
+    }
+}
+
 // listen to a shitton of events to make sure we catch every change as early as possible
 $inputUsername.allInputUpdate(validateInput);
 $inputMode.allInputUpdate(validateInput);
 $inputBeatmapUrl.allInputUpdate(function(e) {
+    showOrHideMapDisplayImage();
     var value = parseBeatmapUrl($inputBeatmapUrl.val().trim());
     $inputBeatmapUrl.parent().parent().toggleClass('has-error', !value.isValid);
     if(value.isValid) {
@@ -427,6 +438,7 @@ function handleSetUrlForReal(s) {
                 $beatmapVersion.append($option);
             }
             updateBeatmapVersionMessage();
+            showOrHideMapDisplayImage(s);
         },
         error: function(jqXHR) {
             if($beatmapVersion.data('setId') != s) return;
@@ -626,6 +638,7 @@ function loadMapDisplayForReal(url) {
             if($inputMode.prop('disabled')) {
                 $inputMode.customSet(data.mode, true);
             }
+            showOrHideMapDisplayImage(data.beatmapSetId);
         },
         error: function(jqXHR) {
             if($mapDisplay.data('toBeLoadedUrl') != url) {
