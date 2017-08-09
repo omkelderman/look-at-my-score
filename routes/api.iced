@@ -12,7 +12,7 @@ PathConstants = require '../PathConstants'
 _ = require './_shared'
 
 MYSQL_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
-ISO_UTC_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/
+ISO_UTC_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/
 
 convertDateStringToDateObject = (str) ->
     # lets trim cuz why not
@@ -21,7 +21,7 @@ convertDateStringToDateObject = (str) ->
     # convert str into a date object.
     # two formats allowed:
     #   - a mysql-date-string (xxxx-xx-xx xx:xx:xx), asume +8 timezone like osu api
-    #   - ISO UTC string (xxxx-xx-xxTxx:xx:xxZ)
+    #   - ISO UTC string (xxxx-xx-xxTxx:xx:xx[.xxx]Z)
     if MYSQL_DATE_STRING_REGEX.test str
         # is mysql-date, lets convert it to an ISO string
         str = str.replace(' ', 'T')+'+08:00'
