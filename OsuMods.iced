@@ -21,7 +21,7 @@ for file in fs.readdirSync MODS_DIR
         MOD_PATHS[modInt] = path.resolve MODS_DIR, file
 MODS_AVAILABLE.sort (a,b) -> a-b
 
-bitmarkToModArray = (mods) ->
+bitmaskToModArray = (mods) ->
     # if PF (Perfect = 16384) is there, dont show SD (SuddenDeath = 32)
     mods &= ~32 if (mods & 16384) is 16384
     # if NC (Nightcore = 512) is there, dont show DT (DoubleTime = 64)
@@ -30,7 +30,7 @@ bitmarkToModArray = (mods) ->
     return MODS_AVAILABLE.filter (mod) -> (mods & mod) is mod
 
 module.exports =
-    bitmarkToModArray: bitmarkToModArray
+    bitmaskToModArray: bitmaskToModArray
     allById: MOD_NAMES
-    toModsStrLong: (mods) -> bitmarkToModArray(mods).map((m) -> '+' + MOD_NAMES[m]).join(' ')
+    toModsStrLong: (mods) -> bitmaskToModArray(mods).map((m) -> '+' + MOD_NAMES[m]).join(' ')
     getImagePath: (m) -> MOD_PATHS[m]

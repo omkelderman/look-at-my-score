@@ -184,7 +184,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
             img.stroke ''
 
 drawMods = (img, mods) ->
-    modsArr = OsuMods.bitmarkToModArray mods
+    modsArr = OsuMods.bitmaskToModArray mods
     for mod, i in modsArr
         drawMod img, mod, i, modsArr.length
 
