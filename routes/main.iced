@@ -1,8 +1,13 @@
 express = require 'express'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
 OsuMods = require '../OsuMods'
+config = require 'config'
 
 router = express.Router()
+
+router.use (req, res, next) ->
+    res.locals.gaCode = config.get 'gaCode'
+    next()
 
 router.get '/', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount

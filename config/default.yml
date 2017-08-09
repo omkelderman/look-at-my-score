@@ -29,3 +29,5 @@ image-result-url: "{protocol}://{host}/score/{image-id}.png"
 watermark:
     text: LookAtMySco.re
     underline-length: 88
+
+gaCode: UA-44234598-3
