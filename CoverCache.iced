@@ -11,9 +11,27 @@ COVER_CACHE_DIR = PathConstants.coverCacheDir
 
 DEFAULT_COVER = path.resolve PathConstants.inputDir, 'defaultCover.jpg'
 
+# yay for useless micro-optimizations xD
+downloadBusyLists = {}
+
 grabCoverFromOsuServer = (beatmapSetId, done) ->
     # return default on falsy values
     return done null, DEFAULT_COVER if not beatmapSetId
+
+    # if proccess is already started for same id, dont start again, but listen for result
+    if downloadBusyLists[beatmapSetId]
+        return downloadBusyLists[beatmapSetId].push done
+
+    # start process for this id
+    downloadBusyLists[beatmapSetId] = [done]
+
+    # define new "done" handler, since it now has to handle all the entries in the list
+    done = (err, result) ->
+        # we done, remove it from the lists-object
+        handles = downloadBusyLists[beatmapSetId]
+        delete downloadBusyLists[beatmapSetId]
+        # execute them all
+        handle err, result for handle in handles
 
     cacheKey = 'coverCache:' + beatmapSetId
     await RedisCache.get cacheKey, defer isInCache, cachedResult
