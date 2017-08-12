@@ -49,11 +49,11 @@ router.get '/test', (req, res, next) ->
         a: 'OK'
 
 handleSubmitError = (nextHandler, req, err) ->
-    submitLogger.warn {req: req, body: req.body, err: err}
+    submitLogger.warn {req: req, body: req.body, err: err}, 'submit error'
     nextHandler err
 
 handleSubmitSuccess = (req, res, data) ->
-    submitLogger.info {req: req, body: req.body, data: data}
+    submitLogger.info {req: req, body: req.body, data: data}, 'submit success'
     res.json data
 
 router.post '/submit', (req, res, next) ->
@@ -123,19 +123,15 @@ router.post '/submit', (req, res, next) ->
     tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
 
     await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
-    if err
-        # img gen failed, lets imidiately return
-        logger.error {err: err, stdout: stdout, stderr: stderr, gmCommand: gmCommand}, 'Error while generating image'
-        return handleSubmitError next, req, _.internalServerError 'error while generating image'
+    # if img gen failed, lets imidiately return
+    return handleSubmitError next, req, _.internalServerError 'error while generating image', err, {stdout: stdout, stderr: stderr, gmCommand: gmCommand} if err
 
     logger.info 'CREATED:', tmpPngLocation
 
     # img created, now move to correct location
     pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'
     await fs.rename tmpPngLocation, pngLocation, defer err
-    if err
-        logger.error {err: err}, 'Error while moving png file', err
-        return handleSubmitError next, req, _.internalServerError 'error while moving png file'
+    return handleSubmitError next, req, _.internalServerError 'error while moving png file', err if err
 
     # also write a json-file with the meta-data
     jsonLocation = path.resolve PathConstants.dataDir, imageId + '.json'
@@ -146,9 +142,7 @@ router.post '/submit', (req, res, next) ->
         beatmap: beatmap
         score: score
     await fs.writeFile jsonLocation, JSON.stringify(outputData), defer err
-    if err
-        logger.error {err: err}, 'Error while writing json file to disk'
-        return handleSubmitError next, req, _.internalServerError 'error while writing json file to disk'
+    return handleSubmitError next, req, _.internalServerError 'error while writing json file to disk', err if err
 
     resultUrl = config.get 'image-result-url'
         .replace '{protocol}', req.protocol
@@ -163,9 +157,7 @@ router.post '/submit', (req, res, next) ->
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
-    if err
-        logger.error {err: err}, 'Error while retrieving image count'
-        return next _.internalServerError 'error while retrieving image count'
+    return next _.internalServerError 'error while retrieving image count', err if err
     res.json imagesAmount
 
 getDefaultFromSet = (set) ->
