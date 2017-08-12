@@ -1,18 +1,15 @@
+logger = require('./Logger').logger
+
 express = require 'express'
 bodyParser = require 'body-parser'
 fs = require 'fs'
 path = require 'path'
-logger = require 'morgan'
+morgan = require 'morgan'
 killable = require 'killable'
 config = require 'config'
 redis = require 'redis'
 RedisCache = require './RedisCache'
 PathConstants = require './PathConstants'
-
-# ensure data-dir/coverCache-dir exists
-fs.mkdirSync PathConstants.dataDir if not fs.existsSync PathConstants.dataDir
-fs.mkdirSync PathConstants.coverCacheDir if not fs.existsSync PathConstants.coverCacheDir
-fs.mkdirSync PathConstants.tmpDir if not fs.existsSync PathConstants.tmpDir
 
 # redis
 redisConfig = config.get 'redis'
@@ -34,12 +31,12 @@ ROUTE_MOUNTS =
     api: '/api'
     main: '/'
 
-console.log 'Loading routes...'
+logger.info 'Loading routes...'
 ROUTES = {}
 for routeName, routeMount of ROUTE_MOUNTS
-    console.log "\tLoading route '#{routeName}'"
+    logger.info "\tLoading route '#{routeName}'"
     ROUTES[routeName] = require path.resolve PathConstants.routesDir, "#{routeName}.iced"
-console.log 'Done loading routes'
+logger.info 'Done loading routes'
 
 app = express()
 app.enable 'trust proxy'
@@ -48,7 +45,7 @@ app.set 'view engine', 'pug'
 
 app.use express.static PathConstants.staticDir
 app.use '/score', express.static PathConstants.dataDir
-app.use logger 'dev'
+app.use morgan 'dev'
 
 app.use bodyParser.urlencoded extended:true
 app.use bodyParser.json()
@@ -77,7 +74,6 @@ await
         server = app.listen PathConstants.socket, defer()
     else
         server = app.listen config.get('http.listen'), config.get('http.host'), defer()
-httpListen = server.address()
 killable server
 
 # set socket chmod if applicable
@@ -85,21 +81,21 @@ if PathConstants.socket
     socketChmod = config.get 'http.socketChmod'
     fs.chmodSync PathConstants.socket, socketChmod if socketChmod
 
-console.log 'Server running on ', httpListen
+logger.info 'Server running on ', server.address()
 
 # on both SIGINT and SIGTERM start shutting down gracefully
 process.on 'SIGTERM', -> process.emit 'requestShutdown'
 process.on 'SIGINT', -> process.emit 'requestShutdown'
 await process.once 'requestShutdown', defer()
-console.log 'Shutting down...'
-process.on 'requestShutdown', -> console.warn "process #{process.pid} already shutting down..."
+logger.info 'Shutting down...'
+process.on 'requestShutdown', -> logger.warn "process #{process.pid} already shutting down..."
 
 # stop http-server
 await server.kill defer err
 if err
-    console.error 'Error while closing HTTP server', err
+    logger.error {err: err}, 'Error while closing HTTP server'
 else
-    console.log 'HTTP server has been closed'
+    logger.info 'HTTP server has been closed'
 
 # close redis connection
 await
@@ -107,4 +103,4 @@ await
     redisClient.quit()
 
 # THE END :D
-console.log "process with pid #{process.pid} ended gracefully :D"
+logger.info "process with pid #{process.pid} ended gracefully :D"

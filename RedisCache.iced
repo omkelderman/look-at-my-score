@@ -1,17 +1,19 @@
+logger = require('./Logger').logger
+
 REDIS_CLIENT = null
 
 initStuff = (redisClient) ->
     REDIS_CLIENT = redisClient
 
 logStoreInCacheError = (key, result, err) ->
-    console.error 'Error while storing value', key, result, err
+    logger.error {err: err, key: key, result: result}, 'Error while storing value'
 
 logGetFromCacheError = (err) ->
-    console.error 'Error while retrieving value', err
+    logger.error {err: err}, 'Error while retrieving value'
 
 storeInCache = (expire, key, value) ->
     if expire and expire > 0 # discard negative and non-existing expire values
-        console.log 'SETEX', expire, key
+        logger.debug {expire: expire, key: key}, 'SETEX'
         value = JSON.stringify value
         REDIS_CLIENT.setex key, expire, value, (err, result) ->
             logStoreInCacheError key, result, err if err or result isnt 'OK'

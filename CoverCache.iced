@@ -48,9 +48,7 @@ grabCoverFromOsuServer = (beatmapSetId, done) ->
     await
         reqDone = defer err, res
         req.once 'response', (res) -> reqDone null, res
-        req.once 'error', (err) ->
-            console.log 'req error'
-            reqDone err
+        req.once 'error', (err) -> reqDone err
     return done err if err
 
     localLocation = path.resolve COVER_CACHE_DIR, beatmapSetId + '.jpg'

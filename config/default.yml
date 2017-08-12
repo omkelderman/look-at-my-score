@@ -31,3 +31,7 @@ watermark:
     underline-length: 88
 
 gaCode: UA-44234598-3
+
+log:
+    path: log/app.log
+    level: info

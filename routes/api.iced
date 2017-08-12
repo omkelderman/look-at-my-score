@@ -1,3 +1,5 @@
+logger = require('../Logger').logger
+
 config = require 'config'
 express = require 'express'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
@@ -41,7 +43,7 @@ convertDateStringToDateObject = (str) ->
     return date
 
 handleOsuApiServerError = (err, nextHandler) ->
-    console.error 'Error while comunicating with osu server', err
+    logger.warn {err: err}, 'Error while comunicating with osu server'
     nextHandler _.badGateway 'osu server superslow or unavailable'
 
 router = express.Router()
@@ -91,7 +93,7 @@ router.post '/submit', (req, res, next) ->
 
         if scores.length > 1
             # oh no, multiple scores, dunno what to do, ask user
-            console.log 'MULTIPLE SCORES'
+            logger.info 'MULTIPLE SCORES'
             return res.json
                 result: 'multiple-scores'
                 data:
@@ -119,18 +121,16 @@ router.post '/submit', (req, res, next) ->
     await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
     if err
         # img gen failed, lets imidiately return
-        # TODO: proper error logging (and do something with err, stdout, stderr, gmCommand)
-        console.error 'Error while generating image', err, stdout, stderr, gmCommand
+        logger.error {err: err, stdout: stdout, stderr: stderr, gmCommand: gmCommand}, 'Error while generating image'
         return next _.internalServerError 'error while generating image'
 
-    console.log 'CREATED:', tmpPngLocation
+    logger.info 'CREATED:', tmpPngLocation
 
     # img created, now move to correct location
     pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'
     await fs.rename tmpPngLocation, pngLocation, defer err
     if err
-        # TODO: proper error logging
-        console.error 'Error while moving png file', err
+        logger.error {err: err}, 'Error while moving png file', err
         return done _.internalServerError 'error while moving png file'
 
     # also write a json-file with the meta-data
@@ -143,8 +143,7 @@ router.post '/submit', (req, res, next) ->
         score: score
     await fs.writeFile jsonLocation, JSON.stringify(outputData), defer err
     if err
-        # TODO: proper error logging
-        console.error 'Error while writing json file to disk', err
+        logger.error {err: err}, 'Error while writing json file to disk'
         return done _.internalServerError 'error while writing json file to disk'
 
     resultUrl = config.get 'image-result-url'
@@ -161,8 +160,7 @@ router.post '/submit', (req, res, next) ->
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
     if err
-        # TODO: proper error logging
-        console.error 'Error while retrieving image count', err
+        logger.error {err: err}, 'Error while retrieving image count'
         return next _.internalServerError 'error while retrieving image count'
     res.json imagesAmount
 

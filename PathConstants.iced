@@ -1,11 +1,14 @@
 config = require 'config'
 path = require 'path'
+mkdirp = require 'mkdirp'
 
-module.exports =
+PathConstants =
     # from config
     dataDir: path.resolve __dirname, config.get 'dirs.data'
     coverCacheDir: path.resolve __dirname, config.get 'dirs.coverCache'
     tmpDir: path.resolve __dirname, config.get 'dirs.tmp'
+
+    logPath: path.resolve __dirname, config.get 'log.path'
 
     # hardcoded
     inputDir: path.resolve __dirname, 'input'
@@ -17,4 +20,12 @@ module.exports =
 httpListen = config.get 'http.listen'
 if typeof httpListen is 'string'
     # httpListen is unix socket
-    module.exports.socket = path.resolve __dirname, httpListen
+    PathConstants.socket = path.resolve __dirname, httpListen
+
+# ensure needed dirs exist
+mkdirp.sync PathConstants.dataDir
+mkdirp.sync PathConstants.coverCacheDir
+mkdirp.sync PathConstants.tmpDir
+mkdirp.sync path.dirname PathConstants.logPath
+
+module.exports = PathConstants
