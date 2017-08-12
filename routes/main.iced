@@ -24,7 +24,7 @@ router.get '/contact', (req, res) ->
 
 router.get '/cover/:id([0-9]+).jpg', (req, res, next) ->
     await CoverCache.grabCoverFromOsuServer req.params.id, defer err, cover
-    return _.handleCoverError err, next if err
+    return next _.coverError err if err
     res.sendFile cover
 
 module.exports = router

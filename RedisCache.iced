@@ -1,4 +1,4 @@
-logger = require('./Logger').logger
+{logger} = require './Logger'
 
 REDIS_CLIENT = null
 

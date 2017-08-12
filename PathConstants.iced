@@ -7,8 +7,7 @@ PathConstants =
     dataDir: path.resolve __dirname, config.get 'dirs.data'
     coverCacheDir: path.resolve __dirname, config.get 'dirs.coverCache'
     tmpDir: path.resolve __dirname, config.get 'dirs.tmp'
-
-    logPath: path.resolve __dirname, config.get 'log.path'
+    logDir: path.resolve __dirname, config.get 'log.dir'
 
     # hardcoded
     inputDir: path.resolve __dirname, 'input'
@@ -26,6 +25,6 @@ if typeof httpListen is 'string'
 mkdirp.sync PathConstants.dataDir
 mkdirp.sync PathConstants.coverCacheDir
 mkdirp.sync PathConstants.tmpDir
-mkdirp.sync path.dirname PathConstants.logPath
+mkdirp.sync PathConstants.logDir
 
 module.exports = PathConstants

@@ -33,5 +33,5 @@ watermark:
 gaCode: UA-44234598-3
 
 log:
-    path: log/app.log
+    dir: log
     level: info

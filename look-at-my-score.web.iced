@@ -1,4 +1,4 @@
-logger = require('./Logger').logger
+{logger} = require './Logger'
 
 express = require 'express'
 bodyParser = require 'body-parser'
