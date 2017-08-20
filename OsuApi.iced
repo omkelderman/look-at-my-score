@@ -3,7 +3,6 @@ RedisCache = require './RedisCache'
 config = require 'config'
 
 CACHE_TIMES = config.get 'cacheTimes'
-API_KEY = config.get 'osu-api-key'
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
 
@@ -17,13 +16,13 @@ doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, customC
 
     # cache didnt exist, lets get it
     url = 'https://osu.ppy.sh/api/' + endpoint
-    params.k = API_KEY
-    await request {url:url, qs:params, json:true, gzip:true}, defer err, resp, body
+    params.k = config.get 'osu-api.key'
+    await request {url:url, qs:params, json:true, gzip:true, timeout:config.get('osu-api.timeout')}, defer err, resp, body
     return done err if err
     if resp.statusCode != 200
         return done
             message: 'osu api error'
-            detail: 'osu api did not respond with http 200 OK response'
+            detail: "osu api did not respond with http 200 OK response (was #{resp.statusCode})"
     if not body
         return done
             message: 'osu api error'

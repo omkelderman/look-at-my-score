@@ -1,4 +1,5 @@
-osu-api-key: API KEY HERE
+osu-api:
+    key: API KEY HERE
 
 # to run on tcp port instead uncommend the following:
 #http:
