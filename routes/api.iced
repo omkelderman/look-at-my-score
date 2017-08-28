@@ -49,11 +49,11 @@ router.get '/test', (req, res, next) ->
         a: 'OK'
 
 handleSubmitError = (nextHandler, req, err) ->
-    submitLogger.warn {req: req, body: req.body, err: err}, 'submit error'
+    submitLogger.warn {req: req, ip: req.ip, body: req.body, err: err}, 'submit error'
     nextHandler err
 
 handleSubmitSuccess = (req, res, data) ->
-    submitLogger.info {req: req, body: req.body, data: data}, 'submit success'
+    submitLogger.info {req: req, ip: req.ip, body: req.body, data: data}, 'submit success'
     res.json data
 
 router.post '/submit', (req, res, next) ->
@@ -98,13 +98,14 @@ router.post '/submit', (req, res, next) ->
         if scores.length > 1
             # oh no, multiple scores, dunno what to do, ask user
             logger.info 'MULTIPLE SCORES'
+            scores.sort (a, b) -> b.date - a.date
             return handleSubmitSuccess req, res,
                 result: 'multiple-scores'
                 data:
                     beatmap_id: beatmap.beatmap_id
                     mode: gameMode
                     scores: scores
-                    texts: scores.map (score) -> "#{score.score} score | #{OsuAcc.getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{OsuMods.toModsStrLong(score.enabled_mods)}"
+                    texts: scores.map (score) -> "[#{score.date.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'}] #{score.score} score | #{OsuAcc.getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{OsuMods.toModsStrLong(score.enabled_mods)}"
 
         score = scores[0]
     else
@@ -126,7 +127,7 @@ router.post '/submit', (req, res, next) ->
     # if img gen failed, lets imidiately return
     return handleSubmitError next, req, _.internalServerError 'error while generating image', err, {stdout: stdout, stderr: stderr, gmCommand: gmCommand} if err
 
-    logger.info 'CREATED:', tmpPngLocation
+    logger.info 'CREATED:', imageId
 
     # img created, now move to correct location
     pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'

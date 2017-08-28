@@ -123,7 +123,7 @@ function fillScoresMenu(data) {
                 $('<button>')
                     .data('score', data.scores[i])
                     .attr('type', 'button')
-                    .addClass('btn btn-default')
+                    .addClass('btn btn-default score-btn')
                     .click(handleChooseScore)
                     .text(data.texts[i])
             )

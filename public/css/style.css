@@ -148,3 +148,7 @@ hr.dark {
     font-weight: bold;
     font-size: 22px;
 }
+
+button.score-btn {
+    text-align: left;
+}
