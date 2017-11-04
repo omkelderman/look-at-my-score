@@ -30,7 +30,7 @@ module.exports.internalServerError = (internalMessage, err, additionalLogFields)
     return { detail: message, status: 500, message: 'Internal Server Error', errorCode: errorCode }
 
 # common errors
-module.exports.osuApiServerError = (err) -> @badGateway 'error while comunicating with osu server', 'osu server superslow or unavailable', err
+module.exports.osuApiServerError = (err) -> @badGateway 'error while comunicating with osu server', 'osu server superslow or unavailable, please try again!', err
 
 module.exports.coverError = (err) ->
     if err.path

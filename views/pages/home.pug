@@ -95,9 +95,10 @@ block content
             p#toggle-manual-score-select.toggle-link: a(href='#'): small: em enter score-details manually (advanced)
         fieldset
             legend What?
-            img#map-display-image.img-responsive.center-block
             p#map-display-comment
-            p#map-display [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
+            #map-display
+                img#map-display-image.img-responsive.center-block
+                p [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
             .form-group
                 label.col-md-4.control-label(for='beatmap_url') Beatmap
                 .col-md-4
@@ -137,9 +138,10 @@ block content
                 #progress-bar
                     .progress.progress-striped.active
                         .progress-bar(role='progressbar', aria-valuenow=100, aria-valuemin=0, aria-valuemax=100) Fetching data and generating image...
-                #result-ok.input-group
-                    span.input-group-addon Result:
-                    input#result-text.form-control(type='text')
+                #result-ok
+                    .input-group
+                        span.input-group-addon Result:
+                        input#result-text.form-control(type='text')
                 #result-error.row
                     #result-error-header.col-md-1 Error
                     #result-error-text.col-md-11.text-center

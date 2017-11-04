@@ -115,7 +115,7 @@ strong.hype {
     font-size: larger;
 }
 
-#map-display > span {
+#map-display p>span {
     color: #ff66aa;
 }
 

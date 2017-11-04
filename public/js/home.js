@@ -251,7 +251,7 @@ function doThaThing(data) {
                     errorText = 'Invalid data: ' + error.detailMessage;
                     break;
                 case 502:
-                    errorText = 'Something didn\'t quite go as planned...: ' + error.detailMessage;
+                    errorText = 'Something didn\'t quite go as planned... The server reported: ' + error.detailMessage;
                     break;
                 default:
                     errorText = 'I\'m sorry, something went wrong... The server reported: ' + error.detailMessage;
@@ -335,20 +335,10 @@ function validateInput(e) {
     $submitBtn.prop('disabled', !inputIsValid);
 }
 
-function showOrHideMapDisplayImage(s) {
-    console.log('request cover img', s);
-    if(s) {
-        $mapDisplayImage.attr('src', '/cover/' + s + '.jpg').show();
-    } else {
-        $mapDisplayImage.attr('src', '').hide();
-    }
-}
-
 // listen to a shitton of events to make sure we catch every change as early as possible
 $inputUsername.allInputUpdate(validateInput);
 $inputMode.allInputUpdate(validateInput);
 $inputBeatmapUrl.allInputUpdate(function(e) {
-    showOrHideMapDisplayImage();
     var value = parseBeatmapUrl($inputBeatmapUrl.val().trim());
     $inputBeatmapUrl.parent().parent().toggleClass('has-error', !value.isValid);
     if(value.isValid) {
@@ -438,7 +428,6 @@ function handleSetUrlForReal(s) {
                 $beatmapVersion.append($option);
             }
             updateBeatmapVersionMessage();
-            showOrHideMapDisplayImage(s);
         },
         error: function(jqXHR) {
             if($beatmapVersion.data('setId') != s) return;
@@ -638,7 +627,6 @@ function loadMapDisplayForReal(url) {
             if($inputMode.prop('disabled')) {
                 $inputMode.customSet(data.mode, true);
             }
-            showOrHideMapDisplayImage(data.beatmapSetId);
         },
         error: function(jqXHR) {
             if($mapDisplay.data('toBeLoadedUrl') != url) {
@@ -671,6 +659,7 @@ function updateMapDisplayData(url, data) {
     $mapDisplayTitle.text(data.title);
     $mapDisplayVersion.text(data.version);
     $mapDisplayCreator.text(data.creator);
+    $mapDisplayImage.attr('src', '/cover/' + data.beatmapSetId + '.jpg').show();
 }
 
 // only allowed to be called from within loadMapDisplay/loadMapDisplayForReal

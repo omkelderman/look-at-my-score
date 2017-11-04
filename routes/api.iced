@@ -97,8 +97,8 @@ router.post '/submit', (req, res, next) ->
 
         if scores.length > 1
             # oh no, multiple scores, dunno what to do, ask user
-            logger.info 'MULTIPLE SCORES'
             scores.sort (a, b) -> b.date - a.date
+            logger.info 'MULTIPLE SCORES'
             return handleSubmitSuccess req, res,
                 result: 'multiple-scores'
                 data:
@@ -127,8 +127,6 @@ router.post '/submit', (req, res, next) ->
     # if img gen failed, lets imidiately return
     return handleSubmitError next, req, _.internalServerError 'error while generating image', err, {stdout: stdout, stderr: stderr, gmCommand: gmCommand} if err
 
-    logger.info 'CREATED:', imageId
-
     # img created, now move to correct location
     pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'
     await fs.rename tmpPngLocation, pngLocation, defer err
@@ -150,6 +148,7 @@ router.post '/submit', (req, res, next) ->
         .replace '{host}', req.get 'host'
         .replace '{image-id}', imageId
 
+    logger.info 'CREATED:', imageId
     handleSubmitSuccess req, res,
         result: 'image'
         image:
@@ -190,6 +189,8 @@ router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
         defaultVersion: getDefaultFromSet set
         set: set
 
+    preloadBeatmapCover setId
+
 beatmapHandler = (req, res, next) ->
     beatmapId = req.params.beatmap_id
     mode = req.params.mode
@@ -206,6 +207,17 @@ beatmapHandler = (req, res, next) ->
         artist: beatmap.artist
         version: beatmap.version
         creator: beatmap.creator
+
+    preloadBeatmapCover beatmap.beatmapset_id
+
+preloadBeatmapCover = (beatmapSetId) ->
+    # lets already *start* loading beatmap-cover since we know it'll be requested after this anyway
+    CoverCache.grabCoverFromOsuServer beatmapSetId, (err, coverJpg) ->
+        if err
+            logger.err {err: err}, 'preloading beatmap-cover failed'
+        else
+            logger.debug {coverJpg: coverJpg}, 'preloaded beatmap-cover'
+
 router.get '/beatmap/:beatmap_id([0-9]+)/:mode([0-3])', beatmapHandler
 router.get '/beatmap/:beatmap_id([0-9]+)', beatmapHandler
 
