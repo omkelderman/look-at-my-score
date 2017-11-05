@@ -1,3 +1,5 @@
+/* global Clipboard */
+
 ///////////////////////////////////
 // custom jQeury extenstion shit //
 ///////////////////////////////////
@@ -41,7 +43,7 @@ var $submitBtn = $('#submit-btn');
 var $sampleImg = $('#sample-img');
 var $imageCount = $('#image-count');
 var $chooseScoreBox = $('#choose-score');
-var $chooseScoreBtnGroup = $('#choose-score-btn-group');
+var $chooseScoreItems = $('#choose-score-items');
 var $beatmapVersionSelect = $('#beatmap-version-select');
 var $manualScoreSelect = $('#manual-score-select');
 var $modsManualInput = $('#mods-manual-input');
@@ -54,10 +56,10 @@ var $resultOk = $('#result-ok');
 var $resultError = $('#result-error');
 var $resultImg = $('#result-img');
 var $progressBar = $('#progress-bar');
-var $resultText = $('#result-text');
 var $resultErrorText = $('#result-error-text');
 var $goBackBtn = $('#go-back-btn');
 var $contactMe = $('#contact-me');
+// var $copyToClipboardButtons = $('.copy-to-clipboard-btn');
 
 // map display
 var $mapDisplayComment = $('#map-display-comment');
@@ -113,22 +115,36 @@ function stopImageCounterUpdate() {
 
 function fillScoresMenu(data) {
     console.log('multiScoreResult', data);
-    $chooseScoreBtnGroup.empty();
-    $chooseScoreBtnGroup.data('beatmap-id', data.beatmap_id);
-    $chooseScoreBtnGroup.data('mode', data.mode);
+    $chooseScoreItems.empty();
     for(var i=0; i < data.scores.length; ++i) {
-        $chooseScoreBtnGroup.append($('<div>')
-            .addClass('btn-group')
-            .append(
-                $('<button>')
-                    .data('score', data.scores[i])
-                    .attr('type', 'button')
-                    .addClass('btn btn-default score-btn')
-                    .click(handleChooseScore)
-                    .text(data.texts[i])
-            )
+        var $buttonTd = $('<td>').append($('<button>')
+            .attr('type', 'button')
+            .addClass('btn btn-default')
+            .text('Pick')
+            .click({beatmap_id: data.beatmap_id, mode: data.mode, score: data.scores[i]}, handleChooseScore)
         );
+
+        var $tds = data.textData[i].map(function(txt) {
+            return $('<td>').text(txt);
+        });
+
+        $('<tr>').append($tds).append($buttonTd).appendTo($chooseScoreItems);
     }
+}
+
+function handleChooseScore(e) {
+    e.preventDefault();
+    var customScoreData = e.data;
+
+    // disable all them buttons
+    $chooseScoreItems.find('button').prop('disabled', true);
+
+    // do request with custom score
+    console.log('requesting score:', customScoreData);
+    $chooseScoreBox.slideUp();
+    toggleProgressBar(true);
+    $submitBtn.prop('disabled', true);
+    doThaThing(customScoreData);
 }
 
 function setOverrideGamemode(override) {
@@ -185,30 +201,9 @@ $frm.submit(function(e) {
 
     $result.slideDown();
     toggleProgressBar(true);
-    $resultText.val('fetching data and generating image...');
     console.log(data);
     doThaThing(data);
 });
-
-function handleChooseScore(e) {
-    e.preventDefault();
-    var $this = $(this);
-    $this.parent().parent().find('button').prop('disabled', true);
-
-    var data = {
-        beatmap_id: $chooseScoreBtnGroup.data('beatmap-id'),
-        mode: $chooseScoreBtnGroup.data('mode'),
-        score: $this.data('score')
-    };
-    console.log('requesting score', data);
-
-    // do request with custom score
-    $chooseScoreBox.slideUp();
-    toggleProgressBar(true);
-    $resultText.val('fetching data and generating image...');
-    $submitBtn.prop('disabled', true);
-    doThaThing(data);
-}
 
 function doThaThing(data) {
     $.ajax({
@@ -221,13 +216,12 @@ function doThaThing(data) {
                 displayResult(true);
                 var imgSrc = data.image.url;
                 $resultImg.attr('src', imgSrc).show();
-                $resultText.val(imgSrc);
+                setImageResult(imgSrc);
                 $contactMe.attr('href', '/contact?img-id=' + data.image.id);
                 incrementImageCounter();
             } else if (data.result === 'multiple-scores') {
-                displayResult(true);
+                hideResult();
                 console.log('welp, multiple scores');
-                $resultText.val('There are multiple scores, please choose one!');
                 fillScoresMenu(data.data);
                 $chooseScoreBox.slideDown();
             } else {
@@ -271,17 +265,32 @@ function doThaThing(data) {
     });
 }
 
+var WEBSITE_URL = window.location.protocol + '//' + window.location.host + '/';
+function setImageResult(imgUrl) {
+    $resultOk.find('input[data-result-template]').each(function() {
+        var $this = $(this);
+        var template = $this.data('result-template');
+        if(!template) return;
+
+        $this.val(template.replace('{imgage-url}', imgUrl).replace('{website-url}', WEBSITE_URL));
+    });
+}
+
 function toggleProgressBar(show) {
     $progressBar.toggle(show);
     if(show) {
-        $resultOk.hide();
-        $resultError.hide();
+        hideResult();
     }
 }
 
 function displayResult(isOk) {
     $resultOk.toggle(isOk);
     $resultError.toggle(!isOk);
+}
+
+function hideResult() {
+    $resultOk.hide();
+    $resultError.hide();
 }
 
 $goBackBtn.click(function(e) {
@@ -678,18 +687,38 @@ $checkboxOverrideMode.change(function() {
     setOverrideGamemode(this.checked);
 });
 
-$(document).ready(function() {
-    $result.hide();
-    $chooseScoreBox.hide();
-    $beatmapVersionSelect.hide();
-    $manualScoreSelect.hide();
-    $modsManualInput.hide();
-    hideMapDisplay();
-    $submitBtn.prop('disabled', true);
-
-    startImageCounterUpdate();
-    initManualSelectInputs();
-    updateManualSelectInputs();
-    setOverrideGamemode(false);
-    $inputMode.customSet(null);
+///////////////////////////////////////////////////
+//////////// CLIPBOARD & TOOLTIP MAGIC ////////////
+///////////////////////////////////////////////////
+var $copyToClipboardButtons = $('.copy-to-clipboard-btn');
+var clipboard = new Clipboard('.copy-to-clipboard-btn');
+clipboard.on('success', function(e) {
+    $(e.trigger).trigger('copied', ['Copied!']);
 });
+clipboard.on('error', function(e) {
+    $(e.trigger).trigger('copied', ['Copy with Ctrl-c']);
+});
+$copyToClipboardButtons.tooltip().bind('copied', function(e, message) {
+    $(this).attr('title', message)
+        .tooltip('fixTitle')
+        .tooltip('show')
+        .attr('title', 'Copy to Clipboard')
+        .tooltip('fixTitle');
+});
+
+///////////////////////////////////////////////////
+/////////////// INIT ALL THE THINGS ///////////////
+///////////////////////////////////////////////////
+$result.hide();
+$chooseScoreBox.hide();
+$beatmapVersionSelect.hide();
+$manualScoreSelect.hide();
+$modsManualInput.hide();
+hideMapDisplay();
+$submitBtn.prop('disabled', true);
+
+startImageCounterUpdate();
+initManualSelectInputs();
+updateManualSelectInputs();
+setOverrideGamemode(false);
+$inputMode.customSet(null);

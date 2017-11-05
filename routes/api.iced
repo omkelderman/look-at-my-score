@@ -105,7 +105,15 @@ router.post '/submit', (req, res, next) ->
                     beatmap_id: beatmap.beatmap_id
                     mode: gameMode
                     scores: scores
-                    texts: scores.map (score) -> "[#{score.date.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'}] #{score.score} score | #{OsuAcc.getAcc(gameMode, score)}% | #{score.maxcombo}x | #{(+score.pp).toFixed(2)} pp | #{OsuMods.toModsStrLong(score.enabled_mods)}"
+                    textData: scores.map (score) ->
+                        return [
+                            score.date.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
+                            score.score
+                            OsuAcc.getAccStr(gameMode, score) + '%'
+                            score.maxcombo
+                            (+score.pp).toFixed(2) + ' pp'
+                            OsuMods.toModsStrLong(score.enabled_mods)
+                        ]
 
         score = scores[0]
     else
@@ -121,6 +129,7 @@ router.post '/submit', (req, res, next) ->
 
     # create the thing :D
     imageId = uuidV4()
+    createdDate = new Date()
     tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
 
     await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
@@ -135,7 +144,7 @@ router.post '/submit', (req, res, next) ->
     # also write a json-file with the meta-data
     jsonLocation = path.resolve PathConstants.dataDir, imageId + '.json'
     outputData =
-        date: new Date().toISOString()
+        date: createdDate
         id: imageId
         mode: gameMode
         beatmap: beatmap

@@ -5,7 +5,17 @@ block vars
     - meta_description = 'Create awesome osu! score-summary pictures you can share anywhere you want!'
 
 block append js
+        script(type='text/javascript', src='/js/clipboard.min.js')
         script(type='text/javascript', src='/js/home.js')
+        
+mixin result-input-box(size, id, text, template)
+    .form-group(class='form-group-' + size)
+        label.col-sm-2.control-label(for=id)= text
+        .col-sm-10.input-group(class='input-group-' + size)
+            input.form-control(id=id, type='text', data-result-template=template)
+            span.input-group-btn
+                button.btn.btn-default.copy-to-clipboard-btn(type='button', data-clipboard-target='#' + id, data-toggle='tooltip', data-placement='right', title='Copy to Clipboard')
+                    img(src='/images/clippy.svg', alt='Copy to clipboard')
 
 block content
     p
@@ -138,20 +148,30 @@ block content
                 #progress-bar
                     .progress.progress-striped.active
                         .progress-bar(role='progressbar', aria-valuenow=100, aria-valuemin=0, aria-valuemax=100) Fetching data and generating image...
-                #result-ok
-                    .input-group
-                        span.input-group-addon Result:
-                        input#result-text.form-control(type='text')
+                #result-ok.form-horizontal
+                    +result-input-box('lg', 'result-direct-img-url', 'Direct image url', '{imgage-url}')
+                    +result-input-box('sm', 'result-bb-code', 'BBCode', '[url={website-url}][img]{imgage-url}[/img][/url]')
+                    +result-input-box('sm', 'result-markdown', 'Markdown', '[![]({imgage-url})]({website-url})')
+                    +result-input-box('sm', 'result-html', 'HTML', '<a href="{website-url}"><img src="{imgage-url}"></a>')
                 #result-error.row
                     #result-error-header.col-md-1 Error
                     #result-error-text.col-md-11.text-center
+                #choose-score
+                    p There are multiple scores, please choose one!
+                    table.table
+                        thead
+                            tr
+                                th Date
+                                th Score
+                                th Accucacy
+                                th Max Combo
+                                th PP
+                                th Mods
+                                th
+                        tbody#choose-score-items
             .col-md-2#back-btn-col
                 button#go-back-btn.btn.btn-primary(type='button') Go Back
         p.text-center.sidenote: small: em Anything not looking like it should? #[a#contact-me(href='/contact') Contact me!]
-            
-    #choose-score
-        h2 Choose score
-        #choose-score-btn-group.btn-group-vertical(role='group')
 
     hr.dark
     p.text-center: small: em Keep in mind this website is still kinda in development, so not everything might work exactly as expected.#[br]Feel free to #[a(href='/contact') contact me] if you think something is wrong!

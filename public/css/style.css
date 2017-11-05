@@ -65,6 +65,11 @@ h2 {
     border-color: #999;
 }
 
+h3 {
+    color: white;
+    border-bottom: dotted 1px #666;
+}
+
 legend {
     color: white;
     border-style: dotted;
@@ -149,6 +154,22 @@ hr.dark {
     font-size: 22px;
 }
 
-button.score-btn {
-    text-align: left;
+#choose-score p {
+    font-weight: bold;
+    font-size: large;
+}
+
+.input-group.input-group-lg .copy-to-clipboard-btn {
+    padding: 10px;
+}
+.input-group.input-group-lg .copy-to-clipboard-btn img {
+    height: 24px;
+    margin-top: -4px;
+}
+.input-group.input-group-sm .copy-to-clipboard-btn {
+    padding: 7px;
+}
+.input-group.input-group-sm .copy-to-clipboard-btn img {
+    height: 16px;
+    margin-top: -6px;
 }
