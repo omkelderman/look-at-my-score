@@ -193,3 +193,7 @@ hr.dark {
     cursor: inherit;
     display: block;
 }
+
+#submit-btn-row {
+    margin-top: 30px;
+}

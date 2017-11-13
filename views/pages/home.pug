@@ -137,7 +137,7 @@ block content
                                     option(value=2) osu!catch
                                     option(value=3) osu!mania
                         span.help-block Use the default gamemode of the map, or set it yourself (eg. for converts)
-            p.toggle-link.toggle-input-mode: a.btn.btn-info(href='#') Upload a replay file (.osr) instead
+            p.toggle-link: a.btn.btn-info.toggle-input-mode(href='#') Upload a replay file (.osr) instead
         form#form-osr.form-horizontal(method='post', action='/api/submit-osr', enctype='multipart/form-data')
             fieldset
                 legend Upload a .osr file
@@ -154,8 +154,8 @@ block content
                     .col-md-4
                         input.form-control.input-md(name='score_pp', type='number', min=0, step='0.01', placeholder='123.45')
                         span.help-block Leave empty if unknown
-            p.toggle-link.toggle-input-mode: a.btn.btn-info(href='#') Specify username and beatmap instead
-        .row
+            p.toggle-link: a.btn.btn-info.toggle-input-mode(href='#') Specify username and beatmap instead
+        #submit-btn-row.row
             .col-md-4.col-md-offset-4
                 button#submit-btn.btn.btn-primary(type='submit') Create
                 =' '
