@@ -2,6 +2,8 @@
 
 config = require 'config'
 express = require 'express'
+multer = require 'multer'
+MulterOsrMemoryStorage = require '../MulterOsrMemoryStorage'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
 OsuApi = require '../OsuApi'
 CoverCache = require '../CoverCache'
@@ -55,6 +57,45 @@ handleSubmitError = (nextHandler, req, err) ->
 handleSubmitSuccess = (req, res, data) ->
     submitLogger.info {req: req, ip: req.ip, body: req.body, data: data}, 'submit success'
     res.json data
+
+
+renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score) ->
+    # create the thing :D
+    imageId = uuidV4()
+    createdDate = new Date()
+    tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
+
+    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
+    # if img gen failed, lets imidiately return
+    return handleSubmitError next, req, _.internalServerError 'error while generating image', err, {stdout: stdout, stderr: stderr, gmCommand: gmCommand} if err
+
+    # img created, now move to correct location
+    pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'
+    await fs.rename tmpPngLocation, pngLocation, defer err
+    return handleSubmitError next, req, _.internalServerError 'error while moving png file', err if err
+
+    # also write a json-file with the meta-data
+    jsonLocation = path.resolve PathConstants.dataDir, imageId + '.json'
+    outputData =
+        date: createdDate
+        id: imageId
+        mode: gameMode
+        beatmap: beatmap
+        score: score
+    await fs.writeFile jsonLocation, JSON.stringify(outputData), defer err
+    return handleSubmitError next, req, _.internalServerError 'error while writing json file to disk', err if err
+
+    resultUrl = config.get 'image-result-url'
+        .replace '{protocol}', req.protocol
+        .replace '{host}', req.get 'host'
+        .replace '{image-id}', imageId
+
+    logger.info 'CREATED:', imageId
+    handleSubmitSuccess req, res,
+        result: 'image'
+        image:
+            id: imageId
+            url: resultUrl
 
 router.post '/submit', (req, res, next) ->
     # required:
@@ -127,42 +168,54 @@ router.post '/submit', (req, res, next) ->
     await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
     return handleSubmitError next, req, _.coverError err if err
 
-    # create the thing :D
-    imageId = uuidV4()
-    createdDate = new Date()
-    tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score
 
-    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
-    # if img gen failed, lets imidiately return
-    return handleSubmitError next, req, _.internalServerError 'error while generating image', err, {stdout: stdout, stderr: stderr, gmCommand: gmCommand} if err
+createScoreObjFromOsrData = (data) ->
+    return {
+        date: data.date
+        enabled_mods: data.modsBitmask
+        count50: data.count50
+        count100: data.count100
+        count300: data.count300
+        countmiss: data.countmiss
+        countkatu: data.countkatu
+        countgeki: data.countgeki
+        score: data.score
+        maxcombo: data.maxCombo
+        username: data.username
+    }
 
-    # img created, now move to correct location
-    pngLocation = path.resolve PathConstants.dataDir, imageId + '.png'
-    await fs.rename tmpPngLocation, pngLocation, defer err
-    return handleSubmitError next, req, _.internalServerError 'error while moving png file', err if err
+osrFileUploadMiddleware = multer({
+    storage: new MulterOsrMemoryStorage()
+    limits:
+        fileSize: 512000 # 500KB
+    fileFilter: (req, file, cb) -> cb null, file.originalname.endsWith('.osr')
+}).single('osr_file')
+router.post '/submit-osr', (req, res, next) ->
+    await osrFileUploadMiddleware req, res, defer uploadErr
+    if uploadErr
+        return handleSubmitError next, req, _.badRequestWithError 'invalid osr file', 'failed to read .osr-file', uploadErr
 
-    # also write a json-file with the meta-data
-    jsonLocation = path.resolve PathConstants.dataDir, imageId + '.json'
-    outputData =
-        date: createdDate
-        id: imageId
-        mode: gameMode
-        beatmap: beatmap
-        score: score
-    await fs.writeFile jsonLocation, JSON.stringify(outputData), defer err
-    return handleSubmitError next, req, _.internalServerError 'error while writing json file to disk', err if err
+    if not req.file
+        return handleSubmitError next, req, _.badRequest 'no .osr file was supplied'
 
-    resultUrl = config.get 'image-result-url'
-        .replace '{protocol}', req.protocol
-        .replace '{host}', req.get 'host'
-        .replace '{image-id}', imageId
+    gameMode = req.file.osrData.gameMode
+    beatmapHash = req.file.osrData.beatmapMd5
 
-    logger.info 'CREATED:', imageId
-    handleSubmitSuccess req, res,
-        result: 'image'
-        image:
-            id: imageId
-            url: resultUrl
+    # get beatmap
+    await OsuApi.getBeatmapByHash beatmapHash, gameMode, defer err, beatmap
+    return handleSubmitError next, req, _.osuApiServerError err if err
+    return handleSubmitError next, req, _.notFound 'beatmap does not exist' if not beatmap
+
+    # grab the new.ppy.sh cover of the beatmap to start with
+    await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
+    return handleSubmitError next, req, _.coverError err if err
+
+    score = createScoreObjFromOsrData req.file.osrData
+    pp = +req.body.score_pp
+    if pp
+        score.pp = pp
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount

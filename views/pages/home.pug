@@ -30,113 +30,132 @@ block content
         p.text-center: small: em Example image &ndash; #[a.dismiss(href='#') Dismiss]
 
     h2 Create
-    form#form.form-horizontal(method='post', action='/api/submit')
-        fieldset
-            legend Who?
-            .form-group
-                label.col-md-4.control-label(for='username') osu! username
-                .col-md-4
-                    input#username.form-control.input-md(name='username', type='text', required=true, placeholder='oliebol')
-                    span.help-block The username of the person who did the score
-            #manual-score-select
-                p.text-center Advanced manual score-data input. This requires some knowlegde about the osu-api score object.
+    #input
+        form#form.form-horizontal(method='post', action='/api/submit')
+            fieldset
+                legend Who?
                 .form-group
-                    label.col-md-4.control-label(for='score_date') Date
+                    label.col-md-4.control-label(for='username') osu! username
                     .col-md-4
-                        input.form-control.input-md(name='score_date', type='text', required=true, placeholder='2016-05-17 07:37:10')
-                        span.help-block Because random reasons, date must be in UTC+8!
-                            br
-                            small (Just like osu api, which more or less is the random reason. ^^)
+                        input#username.form-control.input-md(name='username', type='text', required=true, placeholder='oliebol')
+                        span.help-block The username of the person who did the score
+                #manual-score-select
+                    p.text-center Advanced manual score-data input. This requires some knowlegde about the osu-api score object.
+                    .form-group
+                        label.col-md-4.control-label(for='score_date') Date
+                        .col-md-4
+                            input.form-control.input-md(name='score_date', type='text', required=true, placeholder='2016-05-17 07:37:10')
+                            span.help-block Because random reasons, date must be in UTC+8!
+                                br
+                                small (Just like osu api, which more or less is the random reason. ^^)
+                    .form-group
+                        label.col-md-2.control-label(for='score_enabled_mods') Enabled mods
+                        .col-md-10
+                            #mods-manual-input
+                                input#score_enabled_mods.form-control.input-md(name='score_enabled_mods', type='number', required=true, placeholder='0', value='0')
+                                span.help-block Mods-bitmask, for reference see: #[a(href='https://github.com/ppy/osu-api/wiki#mods') https://github.com/ppy/osu-api/wiki#mods]
+                            #mods-checkboxes-input
+                                each text, value in mods
+                                    label.checkbox-inline
+                                        input(type='checkbox', value=value)
+                                        | #{text}
+                    p#toggle-mods-input.toggle-link: a(href='#'): small: em Toggle manual mod-bitmask input
+                    .form-group
+                        label.col-md-2.control-label(for='score_score') Score
+                        .col-md-2
+                            input.form-control.input-md(name='score_score', type='number', required=true, placeholder='')
+                        label.col-md-2.control-label(for='score_maxcombo') Combo
+                        .col-md-2
+                            input.form-control.input-md(name='score_maxcombo', type='number', required=true, placeholder='')
+                        label.col-md-2.control-label(for='score_rank') Grade
+                        .col-md-2
+                            select.form-control(name='score_rank', required=true)
+                                option(value='X') SS
+                                option(value='XH') Silver SS
+                                option(value='S') S
+                                option(value='SH') Silver S
+                                option(value='A') A
+                                option(value='B') B
+                                option(value='C') C
+                                option(value='D') D
+                    .form-group
+                        label.col-md-2.control-label(for='score_count50') Total number of 50s
+                        .col-md-2
+                            input.form-control.input-md(name='score_count50', type='number', required=true, placeholder='')
+                        label.col-md-2.control-label(for='score_count100') Total number of 100s
+                        .col-md-2
+                            input.form-control.input-md(name='score_count100', type='number', required=true, placeholder='')
+                        label.col-md-2.control-label(for='score_count300') Total number of 300s
+                        .col-md-2
+                            input.form-control.input-md(name='score_count300', type='number', required=true, placeholder='')
+                    .form-group
+                        label.col-md-2.control-label(for='score_countmiss') Total number of misses
+                        .col-md-2
+                            input.form-control.input-md(name='score_countmiss', type='number', required=true, placeholder='')
+                        label.col-md-2.control-label(for='score_countkatu') Number of Katu's
+                        .col-md-2
+                            input.form-control.input-md(name='score_countkatu', type='number', required=true, placeholder='')
+                        label.col-md-2.control-label(for='score_countgeki') Number of Geki's
+                        .col-md-2
+                            input.form-control.input-md(name='score_countgeki', type='number', required=true, placeholder='')
+                    .form-group
+                        label.col-md-4.control-label(for='score_pp') PP
+                        .col-md-4
+                            input.form-control.input-md(name='score_pp', type='number', min=0, step='0.01', placeholder='123.45')
+                            span.help-block Leave empty if unknown
+                p#toggle-manual-score-select.toggle-link: a(href='#'): small: em enter score-details manually (advanced)
+            fieldset
+                legend What?
+                p#map-display-comment
+                #map-display
+                    img#map-display-image.img-responsive.center-block
+                    p [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
                 .form-group
-                    label.col-md-2.control-label(for='score_enabled_mods') Enabled mods
-                    .col-md-10
-                        #mods-manual-input
-                            input#score_enabled_mods.form-control.input-md(name='score_enabled_mods', type='number', required=true, placeholder='0', value='0')
-                            span.help-block Mods-bitmask, for reference see: #[a(href='https://github.com/ppy/osu-api/wiki#mods') https://github.com/ppy/osu-api/wiki#mods]
-                        #mods-checkboxes-input
-                            each text, value in mods
-                                label.checkbox-inline
-                                    input(type='checkbox', value=value)
-                                    | #{text}
-                p#toggle-mods-input.toggle-link: a(href='#'): small: em Toggle manual mod-bitmask input
+                    label.col-md-4.control-label(for='beatmap_url') Beatmap
+                    .col-md-4
+                        input#beatmap_id(name='beatmap_id', type='hidden', required=true)
+                        input#beatmap_url.form-control.input-md(type='text', placeholder='https://osu.ppy.sh/b/12345?m=0 or 12345 or 123s')
+                        span.help-block Enter the URL of a beatmap page, or enter the ID of the beatmap (append an 's' to the ID for a set-ID)
+                .form-group#beatmap-version-select
+                    label.col-md-4.control-label(for='beatmap_version') Difficulty
+                    .col-md-4
+                        select#beatmap_version.form-control
+                        #beatmap_version_message
                 .form-group
-                    label.col-md-2.control-label(for='score_score') Score
-                    .col-md-2
-                        input.form-control.input-md(name='score_score', type='number', required=true, placeholder='')
-                    label.col-md-2.control-label(for='score_maxcombo') Combo
-                    .col-md-2
-                        input.form-control.input-md(name='score_maxcombo', type='number', required=true, placeholder='')
-                    label.col-md-2.control-label(for='score_rank') Grade
-                    .col-md-2
-                        select.form-control(name='score_rank', required=true)
-                            option(value='X') SS
-                            option(value='XH') Silver SS
-                            option(value='S') S
-                            option(value='SH') Silver S
-                            option(value='A') A
-                            option(value='B') B
-                            option(value='C') C
-                            option(value='D') D
+                    label.col-md-4.control-label(for='mode') Gamemode
+                    .col-md-4
+                        .row
+                            .col-md-6
+                                .checkbox
+                                    label
+                                        input#override-mode(type='checkbox')
+                                        | Override gamemode
+                            .col-md-6
+                                select#mode.form-control(name='mode')
+                                    option(value=0) osu!
+                                    option(value=1) osu!taiko
+                                    option(value=2) osu!catch
+                                    option(value=3) osu!mania
+                        span.help-block Use the default gamemode of the map, or set it yourself (eg. for converts)
+            p.toggle-link.toggle-input-mode: a.btn.btn-info(href='#') Upload a replay file (.osr) instead
+        form#form-osr.form-horizontal(method='post', action='/api/submit-osr', enctype='multipart/form-data')
+            fieldset
+                legend Upload a .osr file
                 .form-group
-                    label.col-md-2.control-label(for='score_count50') Total number of 50s
-                    .col-md-2
-                        input.form-control.input-md(name='score_count50', type='number', required=true, placeholder='')
-                    label.col-md-2.control-label(for='score_count100') Total number of 100s
-                    .col-md-2
-                        input.form-control.input-md(name='score_count100', type='number', required=true, placeholder='')
-                    label.col-md-2.control-label(for='score_count300') Total number of 300s
-                    .col-md-2
-                        input.form-control.input-md(name='score_count300', type='number', required=true, placeholder='')
-                .form-group
-                    label.col-md-2.control-label(for='score_countmiss') Total number of misses
-                    .col-md-2
-                        input.form-control.input-md(name='score_countmiss', type='number', required=true, placeholder='')
-                    label.col-md-2.control-label(for='score_countkatu') Number of Katu's
-                    .col-md-2
-                        input.form-control.input-md(name='score_countkatu', type='number', required=true, placeholder='')
-                    label.col-md-2.control-label(for='score_countgeki') Number of Geki's
-                    .col-md-2
-                        input.form-control.input-md(name='score_countgeki', type='number', required=true, placeholder='')
+                    label.col-md-4.control-label an #[em .osr] file
+                    .col-md-4
+                        .input-group
+                            input.form-control#browse-feedback(type='text', readonly=true)
+                            label.input-group-btn
+                                span.btn.btn-default.btn-file Browse
+                                    input#osrfile-input-field(type='file', name='osr_file', required=true, data-feedback-element-id='browse-feedback', accept=".osr")
                 .form-group
                     label.col-md-4.control-label(for='score_pp') PP
                     .col-md-4
-                        input.form-control.input-md(name='score_pp', type='number', step='0.01', placeholder='123.45')
+                        input.form-control.input-md(name='score_pp', type='number', min=0, step='0.01', placeholder='123.45')
                         span.help-block Leave empty if unknown
-            p#toggle-manual-score-select.toggle-link: a(href='#'): small: em enter score-details manually (advanced)
-        fieldset
-            legend What?
-            p#map-display-comment
-            #map-display
-                img#map-display-image.img-responsive.center-block
-                p [#[span#map-mode mode]#[small#map-mode-comment  (comment)]] #[span#map-artist Artist] - #[span#map-title Title] [#[span#map-version diff]] #[small by] #[span#map-creator Mapper]
-            .form-group
-                label.col-md-4.control-label(for='beatmap_url') Beatmap
-                .col-md-4
-                    input#beatmap_id(name='beatmap_id', type='hidden', required=true)
-                    input#beatmap_url.form-control.input-md(type='text', placeholder='https://osu.ppy.sh/b/12345?m=0 or 12345 or 123s')
-                    span.help-block Enter the URL of a beatmap page, or enter the ID of the beatmap (append an 's' to the ID for a set-ID)
-            .form-group#beatmap-version-select
-                label.col-md-4.control-label(for='beatmap_version') Difficulty
-                .col-md-4
-                    select#beatmap_version.form-control
-                    #beatmap_version_message
-            .form-group
-                label.col-md-4.control-label(for='mode') Gamemode
-                .col-md-4
-                    .row
-                        .col-md-6
-                            .checkbox
-                                label
-                                    input#override-mode(type='checkbox')
-                                    | Override gamemode
-                        .col-md-6
-                            select#mode.form-control(name='mode')
-                                option(value=0) osu!
-                                option(value=1) osu!taiko
-                                option(value=2) osu!catch
-                                option(value=3) osu!mania
-                    span.help-block Use the default gamemode of the map, or set it yourself (eg. for converts)
-        .form-group
+            p.toggle-link.toggle-input-mode: a.btn.btn-info(href='#') Specify username and beatmap instead
+        .row
             .col-md-4.col-md-offset-4
                 button#submit-btn.btn.btn-primary(type='submit') Create
                 =' '

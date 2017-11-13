@@ -44,6 +44,49 @@ addThousandSeparators = (number, character) ->
     # introduce character
     return number.replace(/\B(?=(\d{3})+(?!\d))/g, character)
 
+
+calcStdRank = (acc, score) ->
+    return 'X' if acc is 1
+    hasNoMisses = score.countmiss is 0
+    ratio300 = score.count300 / (score.count300 + score.count100 + score.count50 + score.countmiss)
+    ratio50 = score.count50 / (score.count300 + score.count100 + score.count50 + score.countmiss)
+    return 'S' if hasNoMisses and ratio300 > 0.9 and ratio50 < 0.01
+    return 'A' if (hasNoMisses and ratio300 > 0.8) or ratio300 > 0.9
+    return 'B' if (hasNoMisses and ratio300 > 0.7) or ratio300 > 0.8
+    return 'C' if ratio300 > 0.6
+    return 'D'
+
+calcTaikoRank = (acc, score) ->
+    return 'X' if acc is 1
+    return 'D' # lets always default to a D for now LUL, cuz taiko wiki is borked
+
+calcCtbRank = (acc, score) ->
+    return 'X' if acc is 1
+    return 'S' if acc > 0.98
+    return 'A' if acc > 0.94
+    return 'B' if acc > 0.90
+    return 'C' if acc > 0.85
+    return 'D'
+
+calcManiaRank = (acc, score) ->
+    return 'X' if acc is 1
+    return 'S' if acc > 0.95
+    return 'A' if acc > 0.90
+    return 'B' if acc > 0.80
+    return 'C' if acc > 0.70
+    return 'D'
+
+CALC_RANK_FUNCTIONS = [calcStdRank, calcTaikoRank, calcCtbRank, calcManiaRank]
+calcRank = (mode, acc, score, enabled_mods) ->
+    func = CALC_RANK_FUNCTIONS[mode]
+    return 'D' if not func # terrible default, but whatever, at least it wont crash eks dee
+    rank = func acc, score
+
+    # apply silver
+    if (rank is 'S' or rank is 'X') and ((enabled_mods & (1049608)) > 0) # 1049608 = 1048576+8+1024 = hidden + flash light + fade in
+        rank += 'H'
+    return rank
+
 ####################
 # [A] xxx  [D] xxx #
 # [B] xxx  [E] xxx #
@@ -90,15 +133,13 @@ drawHitCounts = (img, mode, score) ->
 
 formatDate = (d) -> d.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
 
-drawAllTheText = (img, beatmap, mode, score, blurColor) ->
+drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
     img
         # draw hit-amounts
         .font(FONTS.ExtraBold)
         .fill(if blurColor then COLOR_BLUR else COLOR1)
         .fontSize(27)
     drawHitCounts img, mode, score
-
-    acc = OsuAcc.getAccStr mode, score
 
     # draw acc
     img.fontSize(48)
@@ -108,7 +149,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
 
         # draw acc
         .fontSize(60)
-        .drawText(551, 201, acc + '%%')
+        .drawText(551, 201, accStr + '%%')
 
     # beatmap.max_combo could be "null", in that case, dont draw it
     # and draw the actual combo a bit lower
@@ -165,7 +206,7 @@ drawAllTheText = (img, beatmap, mode, score, blurColor) ->
         if ppNumber < 10
             ppValueX += 12
 
-        if acc is '100.00' # SS
+        if accStr is '100.00' # SS
             ppTextX += 10
 
         # draw logic
@@ -194,6 +235,8 @@ drawMod = (img, mod, i, totalSize) ->
         throw new Error 'Render error: too many mods to draw'
     img.draw "image Over #{x},195 0,0 #{OsuMods.getImagePath(mod)}"
 
+# pp is optional, if not provided it'll simply not be shown
+# rank is optional, if not provided it'll be calculated
 SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'rank', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
 isValidScoreObj = (obj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of obj
 
@@ -201,11 +244,26 @@ BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> BEATMAP_OBJ_REQ_PROPS.every (x) -> x of obj
 
 createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
+    console.log typeof gameMode, gameMode
+
+    # calc some shit and fetch some additional details
+    overlayImagePath = OVERLAYS[gameMode]
+    throw new Error "Render error: unknown gamemode '#{gameMode}'" if not overlayImagePath
+    enabled_mods = +score.enabled_mods
+    acc = OsuAcc.getAcc gameMode, score
+    accStr = (acc*100).toFixed(2)
+    if score.rank
+        rank = score.rank
+    else
+        rank = calcRank gameMode, acc, score, enabled_mods
+    rankingImagePath = RANKINGS[rank]
+    throw new Error "Render error: unknown rank '#{score.rank}'" if not rankingImagePath
+
     # start
     img = gm bgImg
 
     # draw all text for background-blur
-    drawAllTheText img, beatmap, gameMode, score, true
+    drawAllTheText img, beatmap, gameMode, score, accStr, true
 
     # blur it
     img.blur(0,4.3)
@@ -214,17 +272,10 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
     img.fill('#0007').drawRectangle 0, 0, 900, 250
 
     # draw all the text again, but now for real
-    drawAllTheText img, beatmap, gameMode, score, false
-
-    # img.draw 'la'
+    drawAllTheText img, beatmap, gameMode, score, accStr, false
 
     # lets draw some additional bits
-    enabled_mods = +score.enabled_mods
     rankingOffset = if enabled_mods is 0 then 40 else 20
-    rankingImagePath = RANKINGS[score.rank]
-    throw new Error "Render error: unknown rank '#{score.rank}'" if not rankingImagePath
-    overlayImagePath = OVERLAYS[gameMode]
-    throw new Error "Render error: unknown gamemode '#{gameMode}'" if not rankingImagePath
 
     img
         # draw the rank

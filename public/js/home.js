@@ -37,8 +37,9 @@
 
 }(jQuery));
 
-
+var $inputContainer = $('#input');
 var $frm = $('#form');
+var $frmOsr = $('#form-osr');
 var $submitBtn = $('#submit-btn');
 var $sampleImg = $('#sample-img');
 var $imageCount = $('#image-count');
@@ -49,6 +50,7 @@ var $manualScoreSelect = $('#manual-score-select');
 var $modsManualInput = $('#mods-manual-input');
 var $modsCheckboxesInput = $('#mods-checkboxes-input');
 var $allThemModCheckboxes = $('#mods-checkboxes-input :checkbox');
+var $osrfileInputField = $('#osrfile-input-field');
 
 // result
 var $result = $('#result');
@@ -86,6 +88,7 @@ var $inputScoreEnabledMods = $('#score_enabled_mods');
 
 var MODES = ['osu!', 'osu!taiko', 'osu!catch', 'osu!mania'];
 
+var IMAGE_COUNTER_UPDATE_MS = 10000; // 10 sec
 var imageCounterUpdaterIntervalId = 0;
 
 function incrementImageCounter() {
@@ -106,7 +109,7 @@ function updateImageCounter() {
 }
 
 function startImageCounterUpdate() {
-    imageCounterUpdaterIntervalId = setInterval(updateImageCounter, 10000); // 10 sec
+    imageCounterUpdaterIntervalId = setInterval(updateImageCounter, IMAGE_COUNTER_UPDATE_MS);
 }
 
 function stopImageCounterUpdate() {
@@ -144,7 +147,7 @@ function handleChooseScore(e) {
     $chooseScoreBox.slideUp();
     toggleProgressBar(true);
     $submitBtn.prop('disabled', true);
-    doThaThing(customScoreData);
+    doThaThing(customScoreData, $frm);
 }
 
 function setOverrideGamemode(override) {
@@ -173,13 +176,21 @@ function getCurrentlySelectedGamemode() {
     }
 }
 
-$frm.submit(function(e) {
-    e.preventDefault();
+function transitionFromInputToResultProgress() {
+    // hide/stop all input things
     $submitBtn.prop('disabled', true);
-    $frm.slideUp();
+    $inputContainer.slideUp();
     $sampleImg.slideUp();
     $resultImg.hide();
     stopImageCounterUpdate();
+
+    // show result & progress bar
+    $result.slideDown();
+    toggleProgressBar(true);
+}
+
+$frm.submit(function(e) {
+    e.preventDefault();
 
     var data;
     if($manualScoreSelect.is(':hidden')) {
@@ -198,18 +209,17 @@ $frm.submit(function(e) {
         });
     }
 
-
-    $result.slideDown();
-    toggleProgressBar(true);
-    console.log(data);
-    doThaThing(data);
+    transitionFromInputToResultProgress();
+    doThaThing(data, $frm);
 });
 
-function doThaThing(data) {
-    $.ajax({
-        type: $frm.attr('method'),
-        url: $frm.attr('action'),
+function doThaThing(data, frm) {
+    var dataIsFormData = data instanceof FormData;
+    var ajaxObj = {
+        type: frm.attr('method'),
+        url: frm.attr('action'),
         data: data,
+        processData: !dataIsFormData,
         success: function(data) {
             console.log('SUCCES!', data);
             if(data.result === 'image') {
@@ -262,7 +272,11 @@ function doThaThing(data) {
             toggleProgressBar(false);
             $submitBtn.prop('disabled', false);
         },
-    });
+    };
+    if(dataIsFormData) {
+        ajaxObj.contentType = false;
+    }
+    $.ajax(ajaxObj);
 }
 
 var WEBSITE_URL = window.location.protocol + '//' + window.location.host + '/';
@@ -295,7 +309,7 @@ function hideResult() {
 
 $goBackBtn.click(function(e) {
     e.preventDefault();
-    $frm.slideDown();
+    $inputContainer.slideDown();
     $result.slideUp();
     $chooseScoreBox.slideUp();
 
@@ -687,6 +701,67 @@ $checkboxOverrideMode.change(function() {
     setOverrideGamemode(this.checked);
 });
 
+// toggle input-mode
+$('.toggle-input-mode').click(function(e) {
+    e.preventDefault();
+    var isFileUploadAfterSlide = $frmOsr.is(':hidden');
+    $frm.slideToggle();
+    $frmOsr.slideToggle();
+
+    if(isFileUploadAfterSlide) {
+        validateOsrInput(e);
+    } else {
+        validateInput(e);
+    }
+});
+$submitBtn.click(function(e) {
+    e.preventDefault();
+    if($frmOsr.is(':hidden')) {
+        // data submit
+        $frm.submit();
+    } else {
+        // file submit
+        $frmOsr.submit();
+    }
+});
+
+// file upload mode stuff
+$frmOsr.submit(function(e) {
+    e.preventDefault();
+
+    var data = new FormData();
+    $.each($frmOsr.serializeArray(), function(i, field) {
+        data.append(field.name, field.value);
+    });
+    var fileEl = $osrfileInputField[0];
+    data.append(fileEl.name, fileEl.files[0]);
+
+    transitionFromInputToResultProgress();
+    doThaThing(data, $frmOsr);
+});
+
+$osrfileInputField.on('fileselect', validateOsrInput);
+
+function validateOsrInput(e) {
+    var inputIsValid = true;
+
+    var fileEl = $osrfileInputField[0];
+    var fileInputInvalid = !validateOsrFile(fileEl.files);
+    if(e.currentTarget == fileEl) {
+        $osrfileInputField.parent().parent().parent().toggleClass('has-error', fileInputInvalid);
+    }
+    if(fileInputInvalid) {
+        inputIsValid = false;
+    }
+
+    $submitBtn.prop('disabled', !inputIsValid);
+}
+
+function validateOsrFile(files) {
+    if(!files || files.length != 1) return false;
+    return files[0].name.slice(-4) == '.osr';
+}
+
 ///////////////////////////////////////////////////
 //////////// CLIPBOARD & TOOLTIP MAGIC ////////////
 ///////////////////////////////////////////////////
@@ -709,6 +784,7 @@ $copyToClipboardButtons.tooltip().bind('copied', function(e, message) {
 ///////////////////////////////////////////////////
 /////////////// INIT ALL THE THINGS ///////////////
 ///////////////////////////////////////////////////
+$frmOsr.hide();
 $result.hide();
 $chooseScoreBox.hide();
 $beatmapVersionSelect.hide();
@@ -722,3 +798,19 @@ initManualSelectInputs();
 updateManualSelectInputs();
 setOverrideGamemode(false);
 $inputMode.customSet(null);
+
+
+
+///////////////////////////////////////////////////
+///// some additional stuff for the fileinput /////
+///////////////////////////////////////////////////
+// thanks https://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3
+$(document).on('change', ':file', function() {
+    var input = $(this),
+        numFiles = input.get(0).files ? input.get(0).files.length : 1,
+        label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+    input.trigger('fileselect', [numFiles, label]);
+});
+$(':file').on('fileselect', function(event, numFiles, label) {
+    document.getElementById(this.dataset.feedbackElementId).value = label;
+});

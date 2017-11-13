@@ -5,6 +5,10 @@ crypto = require 'crypto'
 # user errors
 module.exports.notFound = (message) -> { detail: message, status: 404, message: 'Not Found' }
 module.exports.badRequest = (message) -> { detail: message, status: 400, message: 'Bad Request' }
+module.exports.badRequestWithError = (internalMessage, message, err, additionalLogFields) ->
+    errorCode = _logErrorAndGenCode false, internalMessage, err, additionalLogFields
+    message += " (error-code: #{errorCode})"
+    return { detail: message, status: 400, message: 'Bad Request', errorCode: errorCode }
 
 # errors about stuff the user has no control about
 _logErrorAndGenCode = (iFuckedUp, internalMessage, err, additionalLogFields) ->
