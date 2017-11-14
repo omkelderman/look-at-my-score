@@ -1,5 +1,10 @@
 osu-api:
-    key: API KEY HERE
+    key: <API KEY HERE>
+
+discord:
+    webhook:
+        id: <DISCORD WEBHOOK ID HERE>
+        secret: <DISCORD WEBHOOK SECRET HERE>
 
 # to run on tcp port instead uncommend the following:
 #http:

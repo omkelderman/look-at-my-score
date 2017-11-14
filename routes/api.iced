@@ -14,9 +14,35 @@ path = require 'path'
 fs = require 'fs'
 PathConstants = require '../PathConstants'
 _ = require './_shared'
+DiscordWebhookShooter = require '../DiscordWebhookShooter'
 
 MYSQL_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
 ISO_UTC_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/
+
+postDiscordWebhook = (artist, title, creator, diff, beatmapId, date, imageUrl, username, userId) ->
+    webhook =
+        username: 'Look At My Score'
+        content: 'New image just got generated!'
+        embeds: [{
+            title: "#{artist} - #{title} (#{creator}) [#{diff}]"
+            description: '_[LookAtMySco.re](https://lookatmysco.re/)_'
+            timestamp: date
+            image:
+                url: imageUrl
+            footer:
+                text: 'Generated'
+            author:
+                name: username
+        }]
+
+    if beatmapId
+        webhook.embeds[0].url = 'https://osu.ppy.sh/b/' + beatmapId
+    if userId
+        webhook.embeds[0].author.url = 'https://osu.ppy.sh/u/' + userId
+        webhook.embeds[0].author.icon_url = 'https://a.ppy.sh/' + userId
+
+    DiscordWebhookShooter.shoot webhook
+
 
 convertDateStringToDateObject = (str) ->
     # lets trim cuz why not
@@ -96,6 +122,8 @@ renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score) ->
         image:
             id: imageId
             url: resultUrl
+
+    postDiscordWebhook beatmap.artist, beatmap.title, beatmap.creator, beatmap.version, beatmap.beatmap_id, createdDate, resultUrl, score.username, score.user_id
 
 router.post '/submit', (req, res, next) ->
     # required:

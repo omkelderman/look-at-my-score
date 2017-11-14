@@ -1,6 +1,11 @@
 osu-api:
     timeout: 3000
 
+discord:
+    webhook:
+        id: 0
+        secret: null
+
 http:
     # eiher a tcp-port-nr to listen on or a path to a unix-socket
     listen: ../http.sock
