@@ -50,15 +50,13 @@ calcStdRank = (acc, score) ->
     hasNoMisses = score.countmiss is 0
     ratio300 = score.count300 / (score.count300 + score.count100 + score.count50 + score.countmiss)
     ratio50 = score.count50 / (score.count300 + score.count100 + score.count50 + score.countmiss)
-    return 'S' if hasNoMisses and ratio300 > 0.9 and ratio50 < 0.01
-    return 'A' if (hasNoMisses and ratio300 > 0.8) or ratio300 > 0.9
-    return 'B' if (hasNoMisses and ratio300 > 0.7) or ratio300 > 0.8
+    return 'S' if hasNoMisses and (ratio300 > 0.9) and (ratio50 <= 0.01)
+    return 'A' if (hasNoMisses and (ratio300 > 0.8)) or (ratio300 > 0.9)
+    return 'B' if (hasNoMisses and (ratio300 > 0.7)) or (ratio300 > 0.8)
     return 'C' if ratio300 > 0.6
     return 'D'
 
-calcTaikoRank = (acc, score) ->
-    return 'X' if acc is 1
-    return 'D' # lets always default to a D for now LUL, cuz taiko wiki is borked
+calcTaikoRank = calcStdRank # taiko re-uses std formula
 
 calcCtbRank = (acc, score) ->
     return 'X' if acc is 1
@@ -102,7 +100,6 @@ drawStdHitCounts = (img, score) ->
         .drawText(365, 203, 'x' + score.countmiss) # F - miss
 
 drawTaikoHitCounts = (img, score) ->
-
     img.drawText(215, 123, 'x' + (score.count300 - score.countgeki))   # A - great part 1 (greats - geki)
         .drawText(215, 163, 'x' + (score.count100 - score.countkatu))  # B - good part 1 (goods - katu)
         .drawText(215, 203, 'x' + score.countmiss) # C - miss
@@ -244,8 +241,6 @@ BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> BEATMAP_OBJ_REQ_PROPS.every (x) -> x of obj
 
 createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
-    console.log typeof gameMode, gameMode
-
     # calc some shit and fetch some additional details
     overlayImagePath = OVERLAYS[gameMode]
     throw new Error "Render error: unknown gamemode '#{gameMode}'" if not overlayImagePath
