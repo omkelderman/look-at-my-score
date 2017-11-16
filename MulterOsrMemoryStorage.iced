@@ -20,6 +20,7 @@ readOsuString = (stream) ->
     return null if b is 0
     throw new Error 'unexpected byte' if b isnt 0x0b
     len = readULEB128 stream
+    return '' if len is 0
     # extra safety messure, error out on too long strings to avoid eating up memory on malicious input
     throw new Error 'too long string: ' + len if len > 25600
     bytes = readBuffer stream, len
