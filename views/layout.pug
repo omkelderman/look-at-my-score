@@ -43,13 +43,20 @@ html
     body
         div#wrap
             .container
-                div.page-header(style='position: relative;')
+                div.page-header.custom-page-header
                     h1= title
                     
-                    ul.custom-nav
-                        each text, itemUrl in {'/': 'Home', '/contact': 'Contact', '/faq': 'FAQ'}
-                            li(class=url==itemUrl?'active':undefined): a(href=itemUrl)= text
-
+                    button.custom-navbar-toggle(type='button', data-toggle='collapse', data-target='.custom-navbar-collapse')
+                        span.sr-only Toggle navigation
+                        span.icon-bar
+                        span.icon-bar
+                        span.icon-bar
+                    .no-height
+                        .collapse.custom-navbar-collapse
+                            ul.custom-nav
+                                each text, itemUrl in {'/': 'Home', '/contact': 'Contact'}
+                                    li(class=url==itemUrl?'active':undefined): a(href=itemUrl)= text
+            .container
                 block content
 
         div#footer
@@ -57,6 +64,6 @@ html
                 p.text-muted.text-center
                     | &copy; #{new Date().getFullYear()} &ndash; Olle Kelderman (#[a(href='https://osu.ppy.sh/u/2756335') oliebol]) &ndash; #[a(href='/contact') Contact]
                     br
-                    small: em This site is not operated by, sponsored by, or affiliated with osu!
+                    small: em This site is not operated by, sponsored by, or affiliated with osu! or ppy Pty Ltd.
 
         block js

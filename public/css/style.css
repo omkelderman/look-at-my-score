@@ -7,17 +7,56 @@ body {
 
 ul.custom-nav {
     list-style-type: none;
-    margin: 0;
     padding: 0;
+    background-color: #333;
+    overflow: hidden;
+    position: absolute;
+    margin: 10px 0 0 0;
+    right: 0;
+}
+
+.custom-page-header {
+    position: relative;
+}
+
+.custom-page-header h1 {
+    margin-right: 80px;
+}
+
+button.custom-navbar-toggle {
     position: absolute;
     bottom: 0;
     right: 0;
-    background-color: rgba(255, 255, 255, 0.1);
-    overflow: hidden;
+    margin-right: 15px;
+    padding: 9px 10px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    background-color: transparent;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    border-color: #333;
 }
 
-ul.custom-nav li {
-    float: left;
+.custom-navbar-toggle .icon-bar {
+    display: block;
+    width: 22px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: #fff;
+}
+
+.custom-navbar-toggle .icon-bar+.icon-bar {
+    margin-top: 4px;
+}
+
+.no-height {
+    height: 0px;
+}
+
+.custom-navbar-collapse.collapsing {
+    /*display: block!important;*/
+    /*height: auto!important;*/
 }
 
 ul.custom-nav li a {
@@ -26,6 +65,24 @@ ul.custom-nav li a {
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
+}
+
+@media (min-width: 768px) {
+    .custom-navbar-toggle {
+        display: none;
+    }
+    .custom-navbar-collapse {
+        display: block!important;
+    }
+    ul.custom-nav {
+        margin: 0;
+        bottom: 0;
+
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    ul.custom-nav li {
+        float: left;
+    }
 }
 
 ul.custom-nav li.active a {
