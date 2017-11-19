@@ -46,6 +46,7 @@ var $imageCount = $('#image-count');
 var $chooseScoreBox = $('#choose-score');
 var $chooseScoreItems = $('#choose-score-items');
 var $beatmapVersionSelect = $('#beatmap-version-select');
+var $includeRecentCheckbox = $('#include-recent-checkbox');
 var $manualScoreSelect = $('#manual-score-select');
 var $modsManualInput = $('#mods-manual-input');
 var $modsCheckboxesInput = $('#mods-checkboxes-input');
@@ -124,7 +125,7 @@ function fillScoresMenu(data) {
             .attr('type', 'button')
             .addClass('btn btn-default')
             .text('Pick')
-            .click({beatmap_id: data.beatmap_id, mode: data.mode, score: data.scores[i]}, handleChooseScore)
+            .click({beatmap: data.beatmap, mode: data.mode, score: data.scores[i]}, handleChooseScore)
         );
 
         var $tds = data.textData[i].map(function(txt) {
@@ -549,11 +550,26 @@ function parseBeatmapUrl(string) {
     };
 }
 
-$('#toggle-manual-score-select > a').click(function(e){
+// toggle input-mode
+$('.toggle-input-mode').click(function(e) {
+    e.preventDefault();
+    var isFileUploadAfterSlide = $frmOsr.is(':hidden');
+    $frm.slideToggle();
+    $frmOsr.slideToggle();
+
+    if(isFileUploadAfterSlide) {
+        validateOsrInput(e);
+    } else {
+        validateInput(e);
+    }
+});
+
+$('.toggle-manual-input').click(function(e){
     e.preventDefault();
     $manualScoreSelect.slideToggle(updateManualSelectInputs);
+    $includeRecentCheckbox.slideToggle();
 });
-$('#toggle-mods-input > a').click(function(e) {
+$('#toggle-mods-input').click(function(e) {
     e.preventDefault();
 
     // if where going from manual to checkboxes update the checkboxes

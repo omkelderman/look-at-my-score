@@ -39,6 +39,17 @@ block content
                     .col-md-4
                         input#username.form-control.input-md(name='username', type='text', required=true, placeholder='oliebol')
                         span.help-block The username of the person who did the score
+                #include-recent-checkbox
+                    .form-group
+                        .col-md-4.col-md-offset-4
+                            .checkbox
+                                label
+                                    input(type='checkbox', name='include_recent')
+                                    | Include recent scores
+                            span.help-block.
+                                While searching for scores on the osu! server, include recent scores by this user instead of only looking at top-scores.
+                                A maximum of 50 recent scores is searchable.
+                    p.toggle-link: a.toggle-manual-input(href='#'): small: em enter score-details manually (advanced)
                 #manual-score-select
                     p.text-center Advanced manual score-data input. This requires some knowlegde about the osu-api score object.
                     .form-group
@@ -59,7 +70,7 @@ block content
                                     label.checkbox-inline
                                         input(type='checkbox', value=value)
                                         | #{text}
-                    p#toggle-mods-input.toggle-link: a(href='#'): small: em Toggle manual mod-bitmask input
+                    p.toggle-link: a#toggle-mods-input(href='#'): small: em Toggle manual mod-bitmask input
                     .form-group
                         label.col-md-2.control-label(for='score_score') Score
                         .col-md-2
@@ -103,7 +114,7 @@ block content
                         .col-md-4
                             input.form-control.input-md(name='score_pp', type='number', min=0, step='0.01', placeholder='123.45')
                             span.help-block Leave empty if unknown
-                p#toggle-manual-score-select.toggle-link: a(href='#'): small: em enter score-details manually (advanced)
+                    p.toggle-link: a.toggle-manual-input(href='#'): small: em Close manual input and fetch score-data from osu! server
             fieldset
                 legend What?
                 p#map-display-comment

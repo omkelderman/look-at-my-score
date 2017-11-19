@@ -99,14 +99,18 @@ module.exports.getBeatmapSet = (id, done) ->
         # create forged cache entries for each diff as if a per-diff-api call was done
         saveCustomCacheForBeatmapObject b, saveCallback for b in value
 
-module.exports.getScores = (beatmapId, mode, username, done) ->
-    doApiRequestModifyResult 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}
-    , (ss, fromCache) ->
-        for s in ss
-            if fromCache
+setDateObjectInResultList = (resultList, isFromCache) ->
+    for result in resultList
+        if result.date
+            if isFromCache
                 # from cache, is stored as a ISO string
-                s.date = new Date s.date
+                result.date = new Date result.date
             else
                 # from api, is a mysql date string in +8 timezone
-                s.date = new Date s.date.replace(' ', 'T')+'+08:00'
-    , done
+                result.date = new Date result.date.replace(' ', 'T')+'+08:00'
+
+module.exports.getScores = (beatmapId, mode, username, done) ->
+    doApiRequestModifyResult 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, setDateObjectInResultList, done
+
+module.exports.getRecentScores = (mode, username, done) ->
+    doApiRequestModifyResult 'get_user_recent', {m:mode, u:username, type:'string', limit:50}, setDateObjectInResultList, done

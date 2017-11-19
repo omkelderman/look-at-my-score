@@ -47,9 +47,11 @@ addThousandSeparators = (number, character) ->
 
 calcStdRank = (acc, score) ->
     return 'X' if acc is 1
+    hitCount = score.count300 + score.count100 + score.count50 + score.countmiss
+    return 'D' if hitCount is 0 # wtf??
     hasNoMisses = score.countmiss is 0
-    ratio300 = score.count300 / (score.count300 + score.count100 + score.count50 + score.countmiss)
-    ratio50 = score.count50 / (score.count300 + score.count100 + score.count50 + score.countmiss)
+    ratio300 = score.count300 / hitCount
+    ratio50 = score.count50 / hitCount
     return 'S' if hasNoMisses and (ratio300 > 0.9) and (ratio50 <= 0.01)
     return 'A' if (hasNoMisses and (ratio300 > 0.8)) or (ratio300 > 0.9)
     return 'B' if (hasNoMisses and (ratio300 > 0.7)) or (ratio300 > 0.8)
@@ -234,7 +236,7 @@ drawMod = (img, mod, i, totalSize) ->
 
 # pp is optional, if not provided it'll simply not be shown
 # rank is optional, if not provided it'll be calculated
-SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'rank', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
+SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
 isValidScoreObj = (obj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of obj
 
 BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']

@@ -85,7 +85,7 @@ handleSubmitSuccess = (req, res, data) ->
     res.json data
 
 
-renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score) ->
+renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFromOsrFile) ->
     # create the thing :D
     imageId = uuidV4()
     createdDate = new Date()
@@ -108,6 +108,7 @@ renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score) ->
         mode: gameMode
         beatmap: beatmap
         score: score
+        fromOsrFile: isFromOsrFile
     await fs.writeFile jsonLocation, JSON.stringify(outputData), defer err
     return handleSubmitError next, req, _.internalServerError 'error while writing json file to disk', err if err
 
@@ -125,12 +126,22 @@ renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score) ->
 
     postDiscordWebhook beatmap.artist, beatmap.title, beatmap.creator, beatmap.version, beatmap.beatmap_id, createdDate, resultUrl, score.username, score.user_id
 
+parseBoolean = (text) ->
+    return text if typeof text is 'boolean'
+    return false if not text or text.length is 0
+    return ['1', 'on', 'yes', 'true', 'y'].indexOf(text.toString().toLowerCase()) isnt -1
+
 router.post '/submit', (req, res, next) ->
     # required:
     #  - beatmap_id  OR   beatmap
     #  - username    OR   score
     # only required if beatmap is supplied instead of beatmap_id, altho it is ofc always possible to override (for converts):
     #  - mode
+    # optional:
+    #  - include_recent (if supplied, fetch score data from user_recent instead of scores, will be ignored if beatmap_id is unknown)
+    #
+    # additional requirements:
+    #  - if 'username' is supplied instead of 'score', it is required to use the 'beatmap_id' option instead of 'beatmap'
     if not(req.body.beatmap_id? or req.body.beatmap?)
         return handleSubmitError next, req, _.badRequest 'missing either beatmap_id or beatmap object'
 
@@ -157,12 +168,40 @@ router.post '/submit', (req, res, next) ->
         return handleSubmitError next, req, _.badRequest 'beatmap parameters not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.beatmap
         beatmap = req.body.beatmap
 
+    gameMode = +gameMode
+    if isNaN(gameMode) or (gameMode < 0) or (gameMode > 3)
+        return handleSubmitError next, req, _.badRequest 'invalid gamemode'
+
     # get score
     if req.body.username?
-        await OsuApi.getScores beatmap.beatmap_id, gameMode, req.body.username, defer err, scores
+        return handleSubmitError next, req, _.badRequest 'beatmap_id is required when using username instead of score-object' if not req.body.beatmap_id?
+        beatmapId = +req.body.beatmap_id
+
+        await OsuApi.getScores beatmapId, gameMode, req.body.username, defer err, scores
         return handleSubmitError next, req, _.osuApiServerError err if err
-        if not scores or scores.length is 0
+
+        if parseBoolean(req.body.include_recent) and scores.length > 0
+            # we should include recent and
+            # also the scores-array is non-empty, since if it was, there wont be any recent entries of that map anyway
+            # if we have a recent score on a map, so its in the system, we should have at least that one, or an earlier one of the same map, in the top-scores list
+            await OsuApi.getRecentScores gameMode, req.body.username, defer err, recentScores
+            return handleSubmitError next, req, _.osuApiServerError err if err
+            recentScores = recentScores.filter (score) -> score.rank isnt 'F' and +score.beatmap_id is beatmapId
+        else
+            recentScores = []
+
+        if not scores or not recentScores or (recentScores.length + scores.length) is 0
             return handleSubmitError next, req, _.notFound 'user does not exist, or does not have a score on the selected beatmap'
+
+        if scores.length > 0 and recentScores.length > 0
+            scoresUsername = scores[0].username
+            for r in recentScores
+                matchingIndex = scores.findIndex (s) -> s.score is r.score and s.maxcombo is r.maxcombo and s.count50 is r.count50 and s.count100 is r.count100 and s.count300 is r.count300 and s.countmiss is r.countmiss and s.countkatu is r.countkatu and s.countgeki is r.countgeki and s.perfect is r.perfect and s.enabled_mods is r.enabled_mods
+                # if its a recent score thats not already in the top-scores list, lets add it
+                if matchingIndex is -1
+                    # username is missing from recent score objects ¯\_(ツ)_/¯
+                    r.username = scoresUsername
+                    scores.push r
 
         if scores.length > 1
             # oh no, multiple scores, dunno what to do, ask user
@@ -171,7 +210,7 @@ router.post '/submit', (req, res, next) ->
             return handleSubmitSuccess req, res,
                 result: 'multiple-scores'
                 data:
-                    beatmap_id: beatmap.beatmap_id
+                    beatmap: beatmap
                     mode: gameMode
                     scores: scores
                     textData: scores.map (score) ->
@@ -180,7 +219,7 @@ router.post '/submit', (req, res, next) ->
                             score.score
                             OsuAcc.getAccStr(gameMode, score) + '%'
                             score.maxcombo
-                            (+score.pp).toFixed(2) + ' pp'
+                            if score.pp then (+score.pp).toFixed(2) + ' pp' else ''
                             OsuMods.toModsStrLong(score.enabled_mods)
                         ]
 
@@ -196,7 +235,7 @@ router.post '/submit', (req, res, next) ->
     await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
     return handleSubmitError next, req, _.coverError err if err
 
-    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, false
 
 createScoreObjFromOsrData = (data) ->
     return {
@@ -243,7 +282,7 @@ router.post '/submit-osr', (req, res, next) ->
     pp = +req.body.score_pp
     if pp
         score.pp = pp
-    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, true
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
