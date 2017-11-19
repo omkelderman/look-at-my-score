@@ -6,6 +6,10 @@ discord:
         id: <DISCORD WEBHOOK ID HERE>
         secret: <DISCORD WEBHOOK SECRET HERE>
 
+telegram:
+    botToken: <TELEGRAM BOT-TOKEN HERE>
+    chatId: <TELEGRAM CHAT-ID HERE>
+
 # to run on tcp port instead uncommend the following:
 #http:
 #    listen: 8080 # or any other port

@@ -6,6 +6,10 @@ discord:
         id: 0
         secret: null
 
+telegram:
+    botToken: null
+    chatId: null
+
 http:
     # eiher a tcp-port-nr to listen on or a path to a unix-socket
     listen: ../http.sock

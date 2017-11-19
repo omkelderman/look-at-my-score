@@ -85,7 +85,7 @@ if PathConstants.socket
     socketChmod = config.get 'http.socketChmod'
     fs.chmodSync PathConstants.socket, socketChmod if socketChmod
 
-logger.info 'Server running on ', server.address()
+logger.info {address: server.address()}, 'Server running'
 
 # on both SIGINT and SIGTERM start shutting down gracefully
 process.on 'SIGTERM', -> process.emit 'requestShutdown'
