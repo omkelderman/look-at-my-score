@@ -77,11 +77,11 @@ router.get '/test', (req, res, next) ->
         a: 'OK'
 
 handleSubmitError = (nextHandler, req, err) ->
-    submitLogger.warn {req: req, ip: req.ip, body: req.body, err: err}, 'submit error'
+    submitLogger.warn {req: req, ip: req.ip, body: req.body, file: req.file, err: err}, 'submit error'
     nextHandler err
 
 handleSubmitSuccess = (req, res, data) ->
-    submitLogger.info {req: req, ip: req.ip, body: req.body, data: data}, 'submit success'
+    submitLogger.info {req: req, ip: req.ip, body: req.body, file: req.file, data: data}, 'submit success'
     res.json data
 
 
@@ -222,7 +222,7 @@ osrFileUploadMiddleware = multer({
 router.post '/submit-osr', (req, res, next) ->
     await osrFileUploadMiddleware req, res, defer uploadErr
     if uploadErr
-        return handleSubmitError next, req, _.badRequestWithError 'invalid osr file', 'failed to read .osr-file', uploadErr
+        return handleSubmitError next, req, _.badRequestWithError 'invalid osr file', 'failed to read .osr-file', uploadErr, file:uploadErr.file
 
     if not req.file
         return handleSubmitError next, req, _.badRequest 'no .osr file was supplied'

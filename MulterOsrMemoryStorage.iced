@@ -82,6 +82,7 @@ class MulterOsrMemoryStorage
         try
             data = parseOsrFileHeaderFromStream file.stream
         catch err
+            err.file = file
             return cb err
 
         # we've read everything we need, let the thing drain further so the request can complete
