@@ -132,6 +132,8 @@ drawHitCounts = (img, mode, score) ->
 
 formatDate = (d) -> d.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
 
+escapeText = (str) -> str.replace '%', '%%'
+
 drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
     img
         # draw hit-amounts
@@ -148,7 +150,7 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
 
         # draw acc
         .fontSize(60)
-        .drawText(551, 201, accStr + '%%')
+        .drawText(551, 201, escapeText(accStr + '%'))
 
     # beatmap.max_combo could be "null", in that case, dont draw it
     # and draw the actual combo a bit lower
@@ -162,9 +164,9 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
 
     # draw other info crap
     img.fontSize(40)
-        .drawText(150, 40, beatmap.title)
+        .drawText(150, 40, escapeText(beatmap.title))
         .fontSize(16)
-        .drawText(155, 60, beatmap.artist)
+        .drawText(155, 60, escapeText(beatmap.artist))
 
         .fontSize(16)
         .drawText(150, 240, 'Mapped by:')
@@ -173,8 +175,8 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
         .fill(if blurColor then COLOR_BLUR else COLOR2)
         .drawText(702, 240, formatDate(score.date))
         .fontSize(20)
-        .drawText(240, 240, beatmap.creator)
-        .drawText(495, 240, score.username)
+        .drawText(240, 240, escapeText(beatmap.creator))
+        .drawText(495, 240, escapeText(score.username))
 
     if not blurColor
         img.stroke ''
@@ -182,12 +184,12 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
     img.fill(if blurColor then COLOR_BLUR else COLOR1)
         .fontSize(22)
         .font(FONTS.Italic)
-        .drawText(190, 85, beatmap.version)
+        .drawText(190, 85, escapeText(beatmap.version))
 
     # draw some watermark thingy
     img.fill(if blurColor then COLOR_WATERMARK_BLUR else COLOR_WATERMARK)
         .fontSize 12
-        .drawText 4, 14, config.get 'watermark.text'
+        .drawText 4, 14, escapeText config.get 'watermark.text'
         .drawLine 4, 15, 4 + config.get('watermark.underline-length'), 15
 
     # TODO: maybe add logic to see if it is ranked or not, aka maybe pp is here but is not actually applied or something
