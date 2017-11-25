@@ -65,6 +65,8 @@ ul.custom-nav li a {
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
+    border-right: solid 1px #252525;
+    border-left: solid 1px #252525;
 }
 
 @media (min-width: 768px) {

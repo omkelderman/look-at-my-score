@@ -1,0 +1,17 @@
+extends ../../layout
+
+block vars
+    - title = 'How it works | Technical'
+    - meta_description = 'The technical side of how it works'
+
+block content
+    p.text-center: em NOTE: this page is work in progress!
+    p.
+        First of all, all the code that is running this website is available on github:
+        #[a(href='https://github.com/omkelderman/look-at-my-score') github.com/omkelderman/look-at-my-score]
+    p.
+        The website is a #[a(href='https://nodejs.org/') NodeJS] application. It is written in #[a(href='https://maxtaco.github.io/coffee-script/') IcedCoffeeScript],
+        which is a superset of #[a(href='http://coffeescript.org/') CoffeeScript], which itself is a language that compiles to JavaScirpt.
+    p.
+        For the actual image generation part I am using #[a(href='http://www.graphicsmagick.org/') GraphicsMagick] via the
+        #[a(href='https://www.npmjs.com/package/gm') gm module].

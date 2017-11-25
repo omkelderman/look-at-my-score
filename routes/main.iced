@@ -18,6 +18,18 @@ router.get '/', (req, res, next) ->
         generatedImagesAmount: imagesAmount
         mods: OsuMods.allById
 
+router.get '/about', (req, res) ->
+    res.render 'pages/about'
+
+router.get '/how-it-works', (req, res) ->
+    res.render 'pages/how-it-works'
+
+router.get '/how-it-works/technical', (req, res) ->
+    res.render 'pages/how-it-works/technical'
+
+router.get '/history', (req, res) ->
+    res.render 'pages/history'
+
 router.get '/contact', (req, res) ->
     res.render 'pages/contact',
         info: req.query

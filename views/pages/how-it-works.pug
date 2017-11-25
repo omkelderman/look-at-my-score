@@ -1,0 +1,51 @@
+extends ../layout
+
+block vars
+    - title = 'How it works'
+    - meta_description = 'What is Look At My Score, and how does it work?'
+
+block content
+    p #[strong.hype Look At My Score!] is a website where you can generate an image showing a score set in the game #[a(href='https://osu.ppy.sh/') osu!].
+    p A sample of such image looks like this:
+    p: img.img-responsive(src='/images/sample.png')
+    p.
+        Each time an image is generated it is given an unique ID by which it can be referenced. That image will then stay the same and work forever until the
+        end of times. That means that unlike things as for example #[a(href='https://lemmmy.pw/osusig/') this osu! signature generator], the images are not dynamic.
+        You generate one and it will always stay the same. It will not change for example if you set a new highscore on the same map, it is basically a snapshot in time.
+    hr
+    p There are a couple of ways to generate such an image.
+    ol
+        li
+            strong By username and beatmap
+            p.
+                The most simple way of generating an image is entering an osu! username, a beatmap-url and optionally override the gamemode. The system will then fetch the
+                score of that player on that beatmap (with that gamemode) from the osu! server and you're done.
+            p.
+                Keep in mind that using this method only yields the best score of a player on each beatmap per mod. So if you (or someone) just set a score you want to create
+                an image from, but that score didn't beat the best score of that person, by default it won't show up and use the (old) best score.
+            p.
+                There is however a way to get those. By checking the #[strong: em Include recent scores] checkbox. This will include all the recent scores of that person within
+                the last 24 hours and with a limit of 50 scores (including failed/aborted ones and across all beatmaps and modes). Please note that for those scores the PP amount
+                isn't provided by the osu! server, so it will not show a PP value on the image.
+        li
+            strong Using a osu! replay file
+            p.
+                If the score you want to generate an image for is not available through above method, for example because you have a score on the same map with a higher score,
+                then you can upload a osu! replay file (.osr). The system will extract the required data from the file and generate an image accordingly. Unfortunately the PP
+                amount is not stored in the replay file, so you'll have to enter that manually if you want it to show on the final image.
+            p.
+                Keep in mind that for this method to work the beatmap has to be submitted, as the actual beatmap information (such as title etc.) is not in the replay file. It
+                does contain a reference to a beatmap, which it then fetches from the osu! server, so it will only work for beatmaps that are submitted (ranked status does
+                not matter).
+        li
+            strong Manual input (advanced)
+            p.
+                If you're feeling adventurous, there is one last way: the manual way. If you do not have a replay file, or just want to do things manually, there is a link
+                below the username input that reveals a bunch of additional input fields. With these you'll be able to enter all the information about a score the system needs
+                in order to generate the image. For gamemodes other than osu!standard it might not be super obvious what data means what. Therefore this method is not recommended.
+                Feel free to ask for help though!
+            p.
+                You'll still need to select a beatmap so the system can fetch the required information from the osu! server. Generating an image for a beatmap that does not exist
+                on the osu! server is not supported.
+    p Do not hesitate to #[a(href='/contact') ask for help] if things are not clear!
+    p If you'd like to know some technical stuff about how it works, #[a(href='/how-it-works/technical') I've got you covered]!

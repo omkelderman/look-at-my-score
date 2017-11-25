@@ -24,11 +24,10 @@ block content
         | Thought the osu! result screen is just a tad too big to spam in a discord chat? Or you just wanted to put it somewhere where there's not a whole lot of space?
 
     p.text-center.kek Look no further! This is the tool for you!
-    p.text-center Simply enter some details below and get a nice picture generated just for you!
     #sample-img
         img.img-responsive.score.center-block(src='/images/sample.png')
         p.text-center: small: em Example image &ndash; #[a.dismiss(href='#') Dismiss]
-
+    p.text-center Simply enter some details below and get a nice picture generated just for you! Check the #[a(href='/how-it-works') How it works] page for more details!
     h2 Create
     #input
         form#form.form-horizontal(method='post', action='/api/submit')

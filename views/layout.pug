@@ -54,7 +54,7 @@ html
                     .no-height
                         .collapse.custom-navbar-collapse
                             ul.custom-nav
-                                each text, itemUrl in {'/': 'Home', '/contact': 'Contact'}
+                                each text, itemUrl in {'/': 'Home', '/how-it-works':'How it works', '/about':'About', '/contact': 'Contact'}
                                     li(class=url==itemUrl?'active':undefined): a(href=itemUrl)= text
             .container
                 block content
