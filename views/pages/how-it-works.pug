@@ -9,29 +9,30 @@ block content
     p A sample of such image looks like this:
     p: img.img-responsive(src='/images/sample.png')
     p.
-        Each time an image is generated it is given an unique ID by which it can be referenced. That image will then stay the same and work forever until the
+        Each time an image is generated, it is given an unique ID by which it can be referenced. That image will then stay the same and work forever until the
         end of times. That means that unlike things as for example #[a(href='https://lemmmy.pw/osusig/') this osu! signature generator], the images are not dynamic.
-        You generate one and it will always stay the same. It will not change for example if you set a new highscore on the same map, it is basically a snapshot in time.
+        You generate one and it will always stay the same. It will not change no matter what. For example, if you set a new highscore on the same map, the image will
+        stay the same. It is basically a snapshot in time.
     hr
     p There are a couple of ways to generate such an image.
     ol
         li
             strong By username and beatmap
             p.
-                The most simple way of generating an image is entering an osu! username, a beatmap-url and optionally override the gamemode. The system will then fetch the
-                score of that player on that beatmap (with that gamemode) from the osu! server and you're done.
+                The most simple way of generating an image is to enter an osu! username, a beatmap-url, and optionally override the gamemode. The system will then fetch the
+                score of that specific player on that specific beatmap (with that gamemode) from the osu! server, and then you're done.
             p.
-                Keep in mind that using this method only yields the best score of a player on each beatmap per mod. So if you (or someone) just set a score you want to create
-                an image from, but that score didn't beat the best score of that person, by default it won't show up and use the (old) best score.
+                Keep in mind that using this method only yields the best score of a player on each beatmap per mod. So if you (or someone) just set a score that you want to
+                create an image from, but that score didn't beat the best score of that person, by default it won't show up, and the image will use the (old) best score.
             p.
-                There is however a way to get those. By checking the #[strong: em Include recent scores] checkbox. This will include all the recent scores of that person within
-                the last 24 hours and with a limit of 50 scores (including failed/aborted ones and across all beatmaps and modes). Please note that for those scores the PP amount
-                isn't provided by the osu! server, so it will not show a PP value on the image.
+                There is, however, a way to access those lower scores. This can be done by checking the #[strong: em Include recent scores] checkbox. This will display all the
+                recent scores of that person within the last 24 hours, and has a limit of 50 scores (including failed/aborted scores across all beatmaps and modes). Please note
+                that, for those scores, the PP amount isn't provided by the osu! server, so it will not show a PP value on the image.
         li
-            strong Using a osu! replay file
+            strong Using an osu! replay file
             p.
-                If the score you want to generate an image for is not available through above method, for example because you have a score on the same map with a higher score,
-                then you can upload a osu! replay file (.osr). The system will extract the required data from the file and generate an image accordingly. Unfortunately the PP
+                If the score you want to generate an image for is not available through above method, for example, because you have a score on the same map with a higher score,
+                then you can upload an osu! replay file (.osr). The system will extract the required data from the file and generate an image accordingly. Unfortunately, the PP
                 amount is not stored in the replay file, so you'll have to enter that manually if you want it to show on the final image.
             p.
                 Keep in mind that for this method to work the beatmap has to be submitted, as the actual beatmap information (such as title etc.) is not in the replay file. It
@@ -41,8 +42,8 @@ block content
             strong Manual input (advanced)
             p.
                 If you're feeling adventurous, there is one last way: the manual way. If you do not have a replay file, or just want to do things manually, there is a link
-                below the username input that reveals a bunch of additional input fields. With these you'll be able to enter all the information about a score the system needs
-                in order to generate the image. For gamemodes other than osu!standard it might not be super obvious what data means what. Therefore this method is not recommended.
+                below the username input that reveals a bunch of additional input fields. With these, you'll be able to enter all the information about a score the system needs
+                in order to generate the image. For gamemodes other than osu!standard, it might not be super obvious what data means what, therefore this method is not recommended.
                 Feel free to ask for help though!
             p.
                 You'll still need to select a beatmap so the system can fetch the required information from the osu! server. Generating an image for a beatmap that does not exist

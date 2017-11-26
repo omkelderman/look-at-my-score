@@ -6,70 +6,70 @@ block vars
     - date = 'November 26, 2017'
 
 block content
-    p.text-right The tail of how it all started and how it became the thing it is today &ndash; #[small: em= 'written on ' + date]
+    p.text-right The tale of how it all started and how it became the thing it is today &ndash; #[small: em= 'written on ' + date]
     h2 In The Beginning
     p.
-        Somewhere late 2016, early 2017, I started working on this project (back then it had a working title of "osu! scores").
-        At the time the new osu! website was being rolled out and the osu!weekly posts started to appear on the new website layout instead of the old one.
+        Sometime late into 2016 or early 2017, I started working on this project (back then it had a working title of "osu! scores").
+        At the time, the new osu! website was being rolled out and the osu!weekly posts started to appear on the new website layout instead of the old one.
     p.
         The new layout had lots of improvements over the old one (it just looked way better xD) but there was one thing that became kinda weird.
-        In the scorewatch section of the weekly they included embedded youtube video's. In the old layout they would just use a fixed width and height for
-        the embed size and that worked just fine. The new layout however had stricter requirements since it is suppose to work on all kinds of display-sizes
-        (think phones and alike). Therefore a fixed size was out of the question. It had to be the width of the page, whatever it was.
+        In the scorewatch section of the weekly they included embedded youtube videos. In the old layout they would just use a fixed width and height for
+        the embed size and that worked just fine. The new layout however had stricter requirements since it is supposed to work on all kinds of display-sizes
+        (think phones and alike). Therefore, a fixed size was out of the question. It had to be the width of the page, whatever it was.
     p.
         It looked like this:#[br]
         #[img.img-responsive(src='/images/scorewatch-sample.png')]
     p.
-        The thumbnail was hardly any readable, so I thought, hey, what if I create something where you can generate a picture that shows all the information
-        about an osu! score you can want in a #[a(href='https://youtu.be/_5mHSOHV7eM') neat] fashion. And thus this project was born.
+        The thumbnail was hardly readable, so I thought: hey, what if I create something where you can generate a picture that shows all the information
+        about an osu! score you can want in a #[a(href='https://youtu.be/_5mHSOHV7eM') neat] fashion? Thus, this project was born.
     p.
-        I contacted #[a(href='https://osu.ppy.sh/u/1388767') Raveille], who is responsible for the scorewatch section, and they guys overthere seem to like it.
+        I contacted #[a(href='https://osu.ppy.sh/u/1388767') Raveille], who is responsible for the scorewatch section, and the guys over there seem to like it.
         It wasn't really in a usable state at the time however... I just had a quick proof of concept that mostly worked, but it was missing critical features.
-        I wanted them to be able to just use it and have it work without me having to do manual things.
-        But I knew the concept was working, so on to the next stage!
+        I wanted them to be able to just use it and have it work without me having to do manual things, however I knew the concept was working, so on to the
+        next stage!
     h2 I Wanted More
     p.
-        I started to have a bigger goal with the project. I wanted everyone to be able to just use it, get a picture on a url that'll work forever and they can
-        share it with whoever they want to show of something. Or maybe include it in a forum-signature or wherever else they want.
+        I started to have a bigger goal with the project. I wanted everyone to be able to simply use it, get a picture on a url that would work forever, and they
+        could share it with whoever they wanted to show something off, or maybe include it in a forum-signature or wherever else they want.
     p.
-        At the time the project was able to generate a picture with a beatmap and username as input. I can lookup the score of said user on said beatmap with the
-        #[a(href='https://github.com/ppy/osu-api/wiki') osu! api] and fetch the data I need from there. But that had once major limitation: it could only handle
-        scores that where available through the api, and that means only the top-score of a player on that beatmap. I wanted more, I wanted the user to be able to
-        generate a picture for whatever score they want. But that means I had to fetch the data from somewhere else.
+        By the time the project was able to generate a picture with a beatmap and username as input, I could lookup the score of said user on said beatmap with the
+        #[a(href='https://github.com/ppy/osu-api/wiki') osu! api] and fetch the data I needed from there. Unfortunately, that had one major limitation: it could
+        only handle scores that were available through the api, and that means only the top-score of a player on that beatmap. I wanted more, I wanted the user to
+        be able to generate a picture for whatever score they want, but that meant I had to fetch the data from somewhere else.
     p.
-        I figured the easiest was to have that "somewhere else" be a osu! #[a(href='https://osu.ppy.sh/help/wiki/Replay') replay] file. That way a user could just
-        upload such a file to my website and boom, it would #[em just work&trade;]. That sounds great, but means I had to create a replay-file-parser.
+        I figured the easiest was to have that "somewhere else" be an osu! #[a(href='https://osu.ppy.sh/help/wiki/Replay') replay] file. That way a user could just
+        upload such a file to my website and boom, it would #[em just work&trade;]. That sounded great, but means I had to create a replay-file-parser.
     p.
-        Unfortunately at the time, which is about in March, I had less and less time to work on the project due to my graduation project. I was studying computer
-        science at the time. So I never got around creating that parser. I'm a perfectionist so without that feature I didn't really want to call the project done
-        and tell anyone about it. I did however tell some friends and shared it on the #[a(href='https://discord.gg/ppy') osu! dev discord] and some other places
-        when it came up in conversations. I wasn't hiding it or anything, and was fine with whoever find out about it to use it. I just didn't really actively shared
-        it with "the public" myself.
+        Unfortunately, at the time, which was around March, I had less and less time to work on the project due to my graduation project. I was studying computer
+        science at the time. So I never got around creating that parser. I'm a perfectionist, so without that feature included I didn't really want to call the
+        project done and tell anyone about it. I did, however, tell some friends and shared it on the #[a(href='https://discord.gg/ppy') osu! dev discord] and some
+        other places when it came up in conversations. I wasn't hiding it or anything, and was fine with whoever found out about it using it. I just didn't really
+        actively shared it with "the public" intentionally.
     p.
         Somehow it got picked up by someone (or several someones, I have no idea) and I started to get traffic, mostly from Japan. I still to this day have no idea
-        who it was (or where) in Japan that was using it (and maybe still is? Hi!), but hey, it was being used and that is awesome! It motivated me to still keep
-        doing little things and improvements, eventhough I didn't had much time. There where still quite a few things I wasn't really happy about, but the site mostly
+        who it was (or were) in Japan that was using it (and maybe still is? Hi!), but hey, it was being used and that is awesome! It motivated me to keep doing
+        little things and improvements, even though I didn't have much time. There were still quite a few things I wasn't really happy about, but the site mostly
         worked fine.
     h2 Wrapping Things Up
     p.
-        Fast forward about half a year. I have by now #[a(href='https://twitter.com/omkelderman/status/885534470648070144') graduated] and am working at my first job
+        Fast forward about half a year. I have now #[a(href='https://twitter.com/omkelderman/status/885534470648070144') graduated] and am working at my first job
         as a programmer. I have made huge improvements to the UI of the result-screen, so it's now easier than ever to grab the URL of the image to share it or grab
         some pre-made bb-code/markdown/html to paste somewhere. I have also finally finished writing the replay-file-parser and you can now upload a replay file
         generated by the osu! client!
     p.
-        It also got a new name, the name it has right now! Many thanks to #[a(href='https://github.com/Francesco149')='Franc[e]sco'] (who you might know as the creator of
-        #[a(href='https://github.com/Francesco149/oppai-ng') oppai]) for coming up with the name and providing me with a list of suggestions of domainnames to use, of which
-        I ended up using two: #[em lookatmysco.re] runs the main website and #[em nicesco.re] hosts the generated images.
+        It also got a new name, that being the name it has right now! Many thanks to #[a(href='https://github.com/Francesco149')='Franc[e]sco'] (who you might know
+        as the creator of #[a(href='https://github.com/Francesco149/oppai-ng') oppai]) for coming up with the name and providing me with a list of suggestions of
+        domain names, of which I ended up using two: #[em lookatmysco.re] runs the main website and #[em nicesco.re] hosts the generated images.
     p.
-        You might think by now, hey, what about that osu!weekly scorewatch thing? Well that never really took off since I never was really quite ready for it for them to use it.
-        In the meantime osu!weekly doesn't exist anymore, but
-        #[a(href='https://www.reddit.com/r/osugame/comments/7apq5y/osumonthly1_is_here_sorry_we_were_3_days_late/?st=ja5nf755&sh=35512152') the osu!monthly has been revived]
+        By now you might be thinking: hey, what about that osu!weekly scorewatch thing? Well that never really took off since I never was really quite ready for it
+        for them to use it. In the meantime osu!weekly doesn't exist anymore, but
+        #[a(href='https://www.reddit.com/r/osugame/comments/7apq5y/osumonthly1_is_here_sorry_we_were_3_days_late/') the osu!monthly has been revived],
         and the scorewatch is going to make its appearance in there! I am still in touch with the scorewatch team and they are going to use this project!
     p.
         So almost a year later and this project is finally going to be used for its originally intended purpose! #[small: em (Better late than never I guess xD)]
-        But it's open for everyone to use and I encourage you, dear reader, to do so. Please use it as much as you want and share it with all your friends.
-        This is by far my biggest side project ever and I'm rather proud of it.
+        It's open for everyone to use and I encourage you, dear reader, to do so. Please use it as much as you want, and please share it with all your friends.
+        This is by far my biggest side project ever, and I'm rather proud of it.
     p.
-        Have fun using it and above all, thank you!
+        Have fun using it, and above all, thank you!
     p.text-right Olle Kelderman &ndash; #[small: em= date]
     p P.S. Major props if you've actually come this far and read the whole page, I love you &lt;3
