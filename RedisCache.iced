@@ -38,7 +38,7 @@ get = (key, done) -> REDIS_CLIENT.get key, (err, result) ->
 createCacheKeyFromObject = (obj) ->
     Object.keys obj
         .sort()
-        .map (key) -> key + '=' + obj[key]
+        .map (key) -> encodeURIComponent(key) + '=' + encodeURIComponent(obj[key])
         .join '&'
 
 module.exports =
