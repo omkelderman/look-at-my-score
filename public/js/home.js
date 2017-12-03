@@ -717,19 +717,6 @@ $checkboxOverrideMode.change(function() {
     setOverrideGamemode(this.checked);
 });
 
-// toggle input-mode
-$('.toggle-input-mode').click(function(e) {
-    e.preventDefault();
-    var isFileUploadAfterSlide = $frmOsr.is(':hidden');
-    $frm.slideToggle();
-    $frmOsr.slideToggle();
-
-    if(isFileUploadAfterSlide) {
-        validateOsrInput(e);
-    } else {
-        validateInput(e);
-    }
-});
 $submitBtn.click(function(e) {
     e.preventDefault();
     if($frmOsr.is(':hidden')) {
