@@ -23,6 +23,10 @@ ul.custom-nav {
     margin-right: 80px;
 }
 
+.custom-page-header h1 img {
+    margin-right: 10px;
+}
+
 button.custom-navbar-toggle {
     position: absolute;
     bottom: 0;

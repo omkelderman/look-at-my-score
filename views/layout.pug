@@ -5,8 +5,15 @@ html
         title= title
         meta(name='viewport', content='width=device-width, initial-scale=1.0')
         meta(charset='UTF-8')
-        meta(http-equiv='Content-Type' content='text/html;charset=utf-8')
-        link(rel='icon', type='image/ico', href='/favicon.ico')
+        meta(http-equiv='Content-Type', content='text/html;charset=utf-8')
+        
+        //- favicon stuff (thanks realfavicongenerator.net)
+        link(rel='apple-touch-icon', sizes='180x180', href='/apple-touch-icon.png')
+        link(rel='icon', type='image/png', sizes='32x32', href='/favicon-32x32.png')
+        link(rel='icon', type='image/png', sizes='16x16', href='/favicon-16x16.png')
+        link(rel='manifest', href='/manifest.json')
+        link(rel='mask-icon', href='/safari-pinned-tab.svg', color='#ffa6cc')
+        meta(name='theme-color', content='#ffffff')
 
         //- meta description
         meta(name='description', content=meta_description?'Look At My Score! - ' + meta_description:'Look At My Score!')
@@ -44,7 +51,9 @@ html
         div#wrap
             .container
                 div.page-header.custom-page-header
-                    h1= title
+                    h1
+                        img(src='/images/logo50.png', style='margin-right: 10px;')
+                        | #{title}
                     
                     button.custom-navbar-toggle(type='button', data-toggle='collapse', data-target='.custom-navbar-collapse')
                         span.sr-only Toggle navigation
