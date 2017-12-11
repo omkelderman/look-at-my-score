@@ -236,13 +236,15 @@ drawMod = (img, mod, i, totalSize) ->
         throw new Error 'Render error: too many mods to draw'
     img.draw "image Over #{x},195 0,0 #{OsuMods.getImagePath(mod)}"
 
+isValidObj = (obj, requiredKeys) -> (obj isnt null) and (typeof obj is 'object') and (requiredKeys.every (x) -> x of obj)
+
 # pp is optional, if not provided it'll simply not be shown
 # rank is optional, if not provided it'll be calculated
 SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
-isValidScoreObj = (obj) -> SCORE_OBJ_REQ_PROPS.every (x) -> x of obj
+isValidScoreObj = (obj) -> isValidObj obj, SCORE_OBJ_REQ_PROPS
 
 BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']
-isValidBeatmapObj = (obj) -> BEATMAP_OBJ_REQ_PROPS.every (x) -> x of obj
+isValidBeatmapObj = (obj) -> isValidObj obj, BEATMAP_OBJ_REQ_PROPS
 
 createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
     # calc some shit and fetch some additional details

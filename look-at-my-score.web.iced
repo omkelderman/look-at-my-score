@@ -1,7 +1,6 @@
 {logger} = require './Logger'
 
 express = require 'express'
-bodyParser = require 'body-parser'
 fs = require 'fs'
 path = require 'path'
 morgan = require 'morgan'
@@ -46,9 +45,6 @@ app.set 'view engine', 'pug'
 app.use express.static PathConstants.staticDir
 app.use '/score', express.static PathConstants.dataDir
 app.use morgan 'dev'
-
-app.use bodyParser.urlencoded extended:true
-app.use bodyParser.json()
 
 app.use (req, res, next) ->
     res.locals.url = req.url

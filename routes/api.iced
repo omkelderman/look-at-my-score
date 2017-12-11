@@ -2,6 +2,7 @@
 
 config = require 'config'
 express = require 'express'
+bodyParser = require 'body-parser'
 multer = require 'multer'
 MulterOsrMemoryStorage = require '../MulterOsrMemoryStorage'
 OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
@@ -71,6 +72,9 @@ convertDateStringToDateObject = (str) ->
     return date
 
 router = express.Router()
+
+router.use bodyParser.urlencoded extended:true
+router.use bodyParser.json()
 
 router.get '/test', (req, res, next) ->
     res.json
