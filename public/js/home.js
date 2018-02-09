@@ -214,8 +214,18 @@ $frm.submit(function(e) {
     doThaThing(data, $frm);
 });
 
+function fireGoogleAnalyticsEvent() {
+    if(!$.isFunction(window.ga)) return; // google analytics hasnt loaded
+
+    //window.ga('osu-picture', action, label);
+    var args = ['send', 'event', 'osu-picture'];
+    args.push.apply(args, arguments);
+    window.ga.apply(undefined, args);
+}
+
 function doThaThing(data, frm) {
     var dataIsFormData = data instanceof FormData;
+    var gaLabel = dataIsFormData ? 'osr-file' : 'form-data';
     var ajaxObj = {
         type: frm.attr('method'),
         url: frm.attr('action'),
@@ -230,16 +240,19 @@ function doThaThing(data, frm) {
                 setImageResult(imgSrc);
                 $contactMe.attr('href', '/contact?img-id=' + data.image.id);
                 incrementImageCounter();
+                fireGoogleAnalyticsEvent('submit-success', gaLabel);
             } else if (data.result === 'multiple-scores') {
                 hideResult();
                 console.log('welp, multiple scores');
                 fillScoresMenu(data.data);
                 $chooseScoreBox.slideDown();
+                fireGoogleAnalyticsEvent('submit-multiple-scores', gaLabel);
             } else {
                 displayResult(false);
                 console.log('ERROR: unexpected result:', data.result);
                 $resultErrorText.text('If this message appears, I forgot to implement something.... ooops, please contact me, thanks :D');
                 $contactMe.attr('href', '/contact?error=non-implemented-resulti&result=' + data.result);
+                fireGoogleAnalyticsEvent('submit-unknown', gaLabel);
             }
         },
         error: function(jqXHR) {
@@ -267,6 +280,13 @@ function doThaThing(data, frm) {
             } else {
                 $resultErrorText.text('I\'m sorry, something went wrong...');
                 $contactMe.attr('href', '/contact?error=unknown');
+            }
+            if(error && error.status >= 400 && error.status < 500) {
+                // 4xx error, aka it wasnt my fault
+                fireGoogleAnalyticsEvent('submit-user-error', gaLabel);
+            } else {
+                // anything else, aka it was my fault
+                fireGoogleAnalyticsEvent('submit-server-error', gaLabel);
             }
         },
         complete: function() {
