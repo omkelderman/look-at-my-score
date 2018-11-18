@@ -61,6 +61,9 @@ handleSubmitSuccess = (req, res, data) ->
 
 
 renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFromOsrFile) ->
+    # one last final check: mods
+    return handleSubmitError next, req, _.badRequest 'too many mods enabled, if this is a legit score, please contact me!' if not OsuScoreBadgeCreator.isValidModAmount +score.enabled_mods
+
     # create the thing :D
     imageId = uuidV4()
     createdDate = new Date()

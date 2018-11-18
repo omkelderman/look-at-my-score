@@ -230,11 +230,17 @@ drawMods = (img, mods) ->
     for mod, i in modsArr
         drawMod img, mod, i, modsArr.length
 
+calcModDrawOffset = (amountOfMods, modIndex) -> (12.5*amountOfMods)+25 - (modIndex * 20)
 drawMod = (img, mod, i, totalSize) ->
-    x = (12.5*totalSize)+25 - (i * 20)
+    x = calcModDrawOffset totalSize, i
     if x < 0
         throw new Error 'Render error: too many mods to draw'
     img.draw "image Over #{x},195 0,0 #{OsuMods.getImagePath(mod)}"
+
+isValidModAmount = (mods) ->
+    amountOfMods = OsuMods.bitmaskToModArray(mods).length
+    x = calcModDrawOffset amountOfMods, amountOfMods-1
+    return x >= 0
 
 isValidObj = (obj, requiredKeys) -> (obj isnt null) and (typeof obj is 'object') and (requiredKeys.every (x) -> x of obj)
 
@@ -326,3 +332,4 @@ module.exports =
     getGeneratedImagesAmount: getGeneratedImagesAmount
     isValidScoreObj: isValidScoreObj
     isValidBeatmapObj: isValidBeatmapObj
+    isValidModAmount: isValidModAmount
