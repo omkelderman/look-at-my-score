@@ -534,7 +534,7 @@ function parseBeatmapUrl(string) {
     }
 
     // [http[s]://]osu.ppy.sh/[b|s]/123456[[?|&]m=0]
-    var oldSite1Result = /^(?:https?\:\/\/)?osu\.ppy\.sh\/(b|s)\/([0-9]+)(?:(?:\?|&)m=([0-3]))?$/.exec(string);
+    var oldSite1Result = /^(?:https?:\/\/)?osu\.ppy\.sh\/(b|s)\/([0-9]+)(?:(?:\?|&)m=([0-3]))?$/.exec(string);
     if(oldSite1Result) {
         obj = {
             isValid: true,
@@ -545,7 +545,7 @@ function parseBeatmapUrl(string) {
     }
 
     // [http[s]://]osu.ppy.sh/p/beatmap?b=123456[?m=0]
-    var oldSite2Result = /^(?:https?\:\/\/)?osu\.ppy\.sh\/p\/beatmap\?b=([0-9]+)(?:&m=([0-3]))?$/.exec(string);
+    var oldSite2Result = /^(?:https?:\/\/)?osu\.ppy\.sh\/p\/beatmap\?b=([0-9]+)(?:&m=([0-3]))?$/.exec(string);
     if(oldSite2Result) {
         return {
             isValid: true,
@@ -554,8 +554,8 @@ function parseBeatmapUrl(string) {
         };
     }
 
-    // [http[s]://]osu.ppy.sh/beatmapsets/123456#[osu|taiko|fruits|mania]/123456
-    var newSiteResult = /^(?:https?\:\/\/)?osu\.ppy\.sh\/beatmapsets\/[0-9]+#(osu|taiko|fruits|mania)\/([0-9]+)$/.exec(string);
+    // [http[s]://]osu.ppy.sh/beatmapsets/123456[/]#[osu|taiko|fruits|mania]/123456
+    var newSiteResult = /^(?:https?:\/\/)?osu\.ppy\.sh\/beatmapsets\/[0-9]+\/?#(osu|taiko|fruits|mania)\/([0-9]+)$/.exec(string);
     if(newSiteResult) {
         return {
             isValid: true,
