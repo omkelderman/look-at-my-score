@@ -16,9 +16,7 @@ fs = require 'fs'
 PathConstants = require '../PathConstants'
 _ = require './_shared'
 DiscordWebhookShooter = require '../DiscordWebhookShooter'
-
-MYSQL_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
-ISO_UTC_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/
+Util = require '../Util'
 
 postDiscordWebhook = (artist, title, creator, diff, beatmapId, date, imageUrl, username, userId) ->
     webhook =
@@ -43,33 +41,6 @@ postDiscordWebhook = (artist, title, creator, diff, beatmapId, date, imageUrl, u
         webhook.embeds[0].author.icon_url = 'https://a.ppy.sh/' + userId
 
     DiscordWebhookShooter.shoot webhook
-
-
-convertDateStringToDateObject = (str) ->
-    # lets trim cuz why not
-    str = str.trim()
-
-    # convert str into a date object.
-    # two formats allowed:
-    #   - a mysql-date-string (xxxx-xx-xx xx:xx:xx), asume +8 timezone like osu api
-    #   - ISO UTC string (xxxx-xx-xxTxx:xx:xx[.xxx]Z)
-    if MYSQL_DATE_STRING_REGEX.test str
-        # is mysql-date, lets convert it to an ISO string
-        str = str.replace(' ', 'T')+'+08:00'
-    else if not ISO_UTC_DATE_STRING_REGEX.test str
-        # both not mysql date or iso date string, abort
-        return null
-
-    # convert to date object
-    date = new Date str
-
-    # the original string had a sortof valid ISO date format, but no idea yet if it is an actual valid date, so lets do a final check on that
-    if isNaN date.getTime()
-        # invalid date!
-        return null
-
-    # valid date!
-    return date
 
 router = express.Router()
 
@@ -232,7 +203,7 @@ router.post '/submit', (req, res, next) ->
         # no username, so score object must be supplied
         return handleSubmitError next, req, _.badRequest 'score parameters not valid' if not OsuScoreBadgeCreator.isValidScoreObj req.body.score
         score = req.body.score
-        score.date = convertDateStringToDateObject score.date
+        score.date = Util.convertDateStringToDateObject score.date
         return handleSubmitError next, req, _.badRequest 'date value is invalid' if not score.date
 
     # grab the new.ppy.sh cover of the beatmap to start with

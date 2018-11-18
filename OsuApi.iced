@@ -1,6 +1,7 @@
 request = require 'request'
 RedisCache = require './RedisCache'
 config = require 'config'
+Util = require './Util'
 
 CACHE_TIMES = config.get 'cacheTimes'
 
@@ -102,12 +103,7 @@ module.exports.getBeatmapSet = (id, done) ->
 setDateObjectInResultList = (resultList, isFromCache) ->
     for result in resultList
         if result.date
-            if isFromCache
-                # from cache, is stored as a ISO string
-                result.date = new Date result.date
-            else
-                # from api, is a mysql date string in +8 timezone
-                result.date = new Date result.date.replace(' ', 'T')+'+08:00'
+            result.date = Util.convertDateStringToDateObject result.date
 
 module.exports.getScores = (beatmapId, mode, username, done) ->
     doApiRequestModifyResult 'get_scores', {b:beatmapId, m:mode, u:username, type:'string'}, setDateObjectInResultList, done
