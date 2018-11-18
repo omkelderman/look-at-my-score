@@ -5,6 +5,7 @@ path = require 'path'
 RedisCache = require './RedisCache'
 config = require 'config'
 PathConstants = require './PathConstants'
+{logger} = require './Logger'
 
 CACHE_TIME = config.get 'cacheTimes.get_beatmaps'
 COVER_CACHE_DIR = PathConstants.coverCacheDir
@@ -58,6 +59,11 @@ grabCoverFromOsuServer = (beatmapSetId, done) ->
 
         # and store 'null' in cache, which causes default to be used
         RedisCache.storeInCache CACHE_TIME, cacheKey, null
+
+        # also for statistics, notify me so I can build a list of missing cover.jpgs
+        # lets abuse logger.error, its not really an error, app will just work fine
+        # bug with logger.error I get a direct message :D
+        logger.error {beatmapSetId: beatmapSetId, url: url}, 'beatmap cover.jpg does not exist on osu server'
         return
 
     pipe = req.pipe fs.createWriteStream localLocation
