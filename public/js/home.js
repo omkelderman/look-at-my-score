@@ -511,6 +511,17 @@ function updateBeatmapVersionMessage(message, isError) {
     }
 }
 
+var ONLY_ID_REGX = /^([0-9]+)(s)?$/;
+
+// [http[s]://]osu.ppy.sh/[b|s]/123456[[?|&]m=0]
+var OLD_SITE_REGEX1 = /^(?:https?:\/\/)?(?:osu|old)\.ppy\.sh\/(b|s)\/([0-9]+)(?:(?:\?|&)m=([0-3]))?$/;
+
+// [http[s]://]osu.ppy.sh/p/beatmap?b=123456[?m=0]
+var OLD_SITE_REGEX2 = /^(?:https?:\/\/)?(?:osu|old)\.ppy\.sh\/p\/beatmap\?b=([0-9]+)(?:&m=([0-3]))?$/;
+
+// [http[s]://]osu.ppy.sh/beatmapsets/123456[/]#[osu|taiko|fruits|mania]/123456
+var NEW_SITE_REGEX = /^(?:https?:\/\/)?osu\.ppy\.sh\/beatmapsets\/[0-9]+\/?#(osu|taiko|fruits|mania)\/([0-9]+)$/;
+
 function parseBeatmapUrl(string) {
     if(typeof string !== 'string' || string.length === 0) {
         // no string, or empty string
@@ -522,7 +533,7 @@ function parseBeatmapUrl(string) {
     var obj;
 
     // lala
-    var onlyIdResult = /^([0-9]+)(s)?$/.exec(string);
+    var onlyIdResult = ONLY_ID_REGX.exec(string);
     if(onlyIdResult) {
         obj = {
             isValid: true,
@@ -533,8 +544,7 @@ function parseBeatmapUrl(string) {
         return obj;
     }
 
-    // [http[s]://]osu.ppy.sh/[b|s]/123456[[?|&]m=0]
-    var oldSite1Result = /^(?:https?:\/\/)?osu\.ppy\.sh\/(b|s)\/([0-9]+)(?:(?:\?|&)m=([0-3]))?$/.exec(string);
+    var oldSite1Result = OLD_SITE_REGEX1.exec(string);
     if(oldSite1Result) {
         obj = {
             isValid: true,
@@ -544,8 +554,7 @@ function parseBeatmapUrl(string) {
         return obj;
     }
 
-    // [http[s]://]osu.ppy.sh/p/beatmap?b=123456[?m=0]
-    var oldSite2Result = /^(?:https?:\/\/)?osu\.ppy\.sh\/p\/beatmap\?b=([0-9]+)(?:&m=([0-3]))?$/.exec(string);
+    var oldSite2Result = OLD_SITE_REGEX2.exec(string);
     if(oldSite2Result) {
         return {
             isValid: true,
@@ -554,8 +563,7 @@ function parseBeatmapUrl(string) {
         };
     }
 
-    // [http[s]://]osu.ppy.sh/beatmapsets/123456[/]#[osu|taiko|fruits|mania]/123456
-    var newSiteResult = /^(?:https?:\/\/)?osu\.ppy\.sh\/beatmapsets\/[0-9]+\/?#(osu|taiko|fruits|mania)\/([0-9]+)$/.exec(string);
+    var newSiteResult = NEW_SITE_REGEX.exec(string);
     if(newSiteResult) {
         return {
             isValid: true,
