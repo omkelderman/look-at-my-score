@@ -18,6 +18,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "eslint": "^5.9.0"
+    "eslint": "^5.9.0",
+    "iced-coffee-script": "^108.0.14"
   }
 }
