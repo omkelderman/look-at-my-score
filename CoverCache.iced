@@ -6,7 +6,7 @@ RedisCache = require './RedisCache'
 config = require 'config'
 PathConstants = require './PathConstants'
 {logger} = require './Logger'
-uuidV4 = require 'uuid/v4'
+{ v4: uuidV4 } = require 'uuid'
 
 CACHE_TIME = config.get 'cacheTimes.get_beatmaps'
 COVER_CACHE_DIR = PathConstants.coverCacheDir

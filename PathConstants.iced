@@ -1,6 +1,6 @@
 config = require 'config'
 path = require 'path'
-mkdirp = require 'mkdirp'
+fs = require 'fs'
 
 PathConstants =
     # from config
@@ -22,9 +22,9 @@ if typeof httpListen is 'string'
     PathConstants.socket = path.resolve __dirname, httpListen
 
 # ensure needed dirs exist
-mkdirp.sync PathConstants.dataDir
-mkdirp.sync PathConstants.coverCacheDir
-mkdirp.sync PathConstants.tmpDir
-mkdirp.sync PathConstants.logDir
+fs.mkdirSync PathConstants.dataDir, {recursive: true}
+fs.mkdirSync PathConstants.coverCacheDir, {recursive: true}
+fs.mkdirSync PathConstants.tmpDir, {recursive: true}
+fs.mkdirSync PathConstants.logDir, {recursive: true}
 
 module.exports = PathConstants
