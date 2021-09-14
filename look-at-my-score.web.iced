@@ -12,18 +12,19 @@ PathConstants = require './PathConstants'
 
 # redis
 redisConfig = config.get 'redis'
-redisSettings =
-    db: redisConfig.db
-    prefix: redisConfig.prefix+':'
-if redisConfig.path
-    redisSettings.path = redisConfig.path
-else
-    redisSettings.host = redisConfig.host
-    redisSettings.port = redisConfig.port
-redisClient = redis.createClient redisSettings
+if redisConfig
+    redisSettings =
+        db: redisConfig.db
+        prefix: redisConfig.prefix+':'
+    if redisConfig.path
+        redisSettings.path = redisConfig.path
+    else
+        redisSettings.host = redisConfig.host
+        redisSettings.port = redisConfig.port
+    redisClient = redis.createClient redisSettings
 
-# init the things
-RedisCache.init redisClient
+    # init the things
+    RedisCache.init redisClient
 
 # setup routes
 ROUTE_MOUNTS =
@@ -97,10 +98,11 @@ if err
 else
     logger.info 'HTTP server has been closed'
 
-# close redis connection
-await
-    redisClient.once 'end', defer()
-    redisClient.quit()
+if redisClient
+    # close redis connection
+    await
+        redisClient.once 'end', defer()
+        redisClient.quit()
 
 # THE END :D
 logger.info "process with pid #{process.pid} ended gracefully :D"

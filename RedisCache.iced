@@ -12,6 +12,7 @@ logGetFromCacheError = (err) ->
     logger.error {err: err}, 'Error while retrieving value'
 
 storeInCache = (expire, key, value) ->
+    return if not REDIS_CLIENT
     if expire and expire > 0 # discard negative and non-existing expire values
         logger.debug {expire: expire, key: key}, 'SETEX'
         value = JSON.stringify value
@@ -22,18 +23,20 @@ storeInCache = (expire, key, value) ->
 
 # redis shouldnt be throwing errors, so on error, never pass it on, just log it and return as if value wasnt in cache
 # return a boolean if value was from cache or not, to differentiate between null-values in cache and non-existing cache values
-get = (key, done) -> REDIS_CLIENT.get key, (err, result) ->
-    if err
-        logGetFromCacheError err
-        return done false # error, so not in cache
+get = (key, done) ->
+    return done false, null if not REDIS_CLIENT
+    REDIS_CLIENT.get key, (err, result) ->
+        if err
+            logGetFromCacheError err
+            return done false # error, so not in cache
 
-    return done false, null if result is null # value not in cache
+        return done false, null if result is null # value not in cache
 
-    try
-        return done true, JSON.parse result # value in cache
-    catch ex
-        logGetFromCacheError ex
-        return done false # error, so not in cache
+        try
+            return done true, JSON.parse result # value in cache
+        catch ex
+            logGetFromCacheError ex
+            return done false # error, so not in cache
 
 createCacheKeyFromObject = (obj) ->
     Object.keys obj
