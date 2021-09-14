@@ -1,5 +1,8 @@
 osu-api:
     timeout: 3000
+    rateLimit:
+        tokensPerInterval: 60
+        interval: minute
 
 discord:
     webhook:

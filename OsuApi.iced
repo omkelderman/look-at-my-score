@@ -2,8 +2,10 @@ request = require 'request'
 RedisCache = require './RedisCache'
 config = require 'config'
 Util = require './Util'
+RateLimiter = require('limiter').RateLimiter
 
 CACHE_TIMES = config.get 'cacheTimes'
+LIMITER = new RateLimiter(config.get('osu-api.rateLimit'))
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
 
@@ -18,6 +20,7 @@ doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, customC
     # cache didnt exist, lets get it
     url = 'https://osu.ppy.sh/api/' + endpoint
     params.k = config.get 'osu-api.key'
+    await LIMITER.removeTokens(1).then(defer())
     await request {url:url, qs:params, json:true, gzip:true, timeout:config.get('osu-api.timeout')}, defer err, resp, body
     return done err if err
     if resp.statusCode != 200
