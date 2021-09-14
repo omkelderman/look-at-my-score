@@ -60,7 +60,7 @@ handleSubmitSuccess = (req, res, data) ->
     res.json data
 
 
-renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFromOsrFile, isCustomCover) ->
+renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFromOsrFile, isCustomCover, ppTextSuffix) ->
     # one last final check: mods
     return handleSubmitError next, req, _.badRequest 'too many mods enabled, if this is a legit score, please contact me!' if not OsuScoreBadgeCreator.isValidModAmount +score.enabled_mods
 
@@ -69,7 +69,7 @@ renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFro
     createdDate = new Date()
     tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
 
-    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
+    await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, ppTextSuffix, defer err, stdout, stderr, gmCommand
 
     # remove the cover image if it was a custom one, even before we handle the error from OsuScoreBadgeCreator.create since we wanna delete it regardless if it failed or not
     if isCustomCover
@@ -125,6 +125,7 @@ router.post '/submit', (req, res, next) ->
     # optional:
     #  - include_recent (if supplied, fetch score data from user_recent instead of scores, will be ignored if beatmap_id is unknown)
     #  - bg: base64 encoded image to be used as background
+    #  - pp_text_suffix: if there is a pp value, add this text below the PP text
     #
     # additional requirements:
     #  - if 'username' is supplied instead of 'score', it is required to use the 'beatmap_id' option instead of 'beatmap'
@@ -230,7 +231,7 @@ router.post '/submit', (req, res, next) ->
         return handleSubmitError next, req, _.coverError err if err
         isCustomCover = false
 
-    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, false, isCustomCover
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, false, isCustomCover, req.body.pp_text_suffix
 
 createScoreObjFromOsrData = (data) ->
     return {
@@ -277,7 +278,7 @@ router.post '/submit-osr', (req, res, next) ->
     pp = +req.body.score_pp
     if pp
         score.pp = pp
-    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, true, false
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, true, false, null
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount

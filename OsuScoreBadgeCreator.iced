@@ -134,7 +134,7 @@ formatDate = (d) -> d.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UT
 
 escapeText = (str) -> str.replace '%', '%%'
 
-drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
+drawAllTheText = (img, beatmap, mode, score, accStr, blurColor, ppTextSuffix) ->
     img
         # draw hit-amounts
         .font(FONTS.ExtraBold)
@@ -207,9 +207,6 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
         if ppNumber < 10
             ppValueX += 12
 
-        if accStr is '100.00' # SS
-            ppTextX += 10
-
         # draw logic
         img.font FONTS.ExtraBold
             .fill(if blurColor then COLOR3_STROKE else COLOR3)
@@ -218,10 +215,18 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor) ->
         img.fontSize 32
             .drawText ppValueX, 136, ppNumber.toFixed 2
             .font FONTS.ExtraBoldItalic
-            .fontSize 62
+        if ppTextSuffix
+            img.fontSize 54
+        else
+            img.fontSize 62
         if not blurColor
             img.stroke COLOR3_STROKE, 4
-        img.drawText ppTextX, 200, 'PP'
+        img.drawText ppTextX, (if ppTextSuffix then 192 else 200), 'PP'
+        if ppTextSuffix
+            if not blurColor
+                img.stroke COLOR3_STROKE, 1
+            img.fontSize 24
+            img.drawText ppTextX, 218, ppTextSuffix
         if not blurColor
             img.stroke ''
 
@@ -252,13 +257,16 @@ isValidScoreObj = (obj) -> isValidObj obj, SCORE_OBJ_REQ_PROPS
 BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> isValidObj obj, BEATMAP_OBJ_REQ_PROPS
 
-createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
+createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix) ->
     # calc some shit and fetch some additional details
     overlayImagePath = OVERLAYS[gameMode]
     throw new Error "Render error: unknown gamemode '#{gameMode}'" if not overlayImagePath
     enabled_mods = +score.enabled_mods
     acc = OsuAcc.getAcc gameMode, score
-    accStr = (acc*100).toFixed(2)
+    if acc is 1
+        accStr = '100'
+    else
+        accStr = (acc*100).toFixed(2)
     if score.rank
         rank = score.rank
     else
@@ -270,7 +278,7 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
     img = gm bgImg
 
     # draw all text for background-blur
-    drawAllTheText img, beatmap, gameMode, score, accStr, true
+    drawAllTheText img, beatmap, gameMode, score, accStr, true, ppTextSuffix
 
     # blur it
     img.blur(0,4.3)
@@ -279,7 +287,7 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
     img.fill('#0007').drawRectangle 0, 0, 900, 250
 
     # draw all the text again, but now for real
-    drawAllTheText img, beatmap, gameMode, score, accStr, false
+    drawAllTheText img, beatmap, gameMode, score, accStr, false, ppTextSuffix
 
     # lets draw some additional bits
     rankingOffset = if enabled_mods is 0 then 40 else 20
@@ -299,12 +307,12 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score) ->
 # input objects must be "correct"
 # check with isValidScoreObj/isValidBeatmapObj
 # otherwise shit will fail
-createOsuScoreBadge = (bgImg, beatmap, gameMode, score, outputFile, done) ->
+createOsuScoreBadge = (bgImg, beatmap, gameMode, score, outputFile, ppTextSuffix, done) ->
     # make sure gameMode is a number
     gameMode = +gameMode
 
     try
-        img = createGmDrawCommandChain bgImg, beatmap, gameMode, score
+        img = createGmDrawCommandChain bgImg, beatmap, gameMode, score, ppTextSuffix
     catch imgCreateError
         return done imgCreateError
 
