@@ -126,7 +126,7 @@ router.post '/submit', (req, res, next) ->
     if not(req.body.username? or req.body.score?)
         return handleSubmitError next, req, _.badRequest 'missing either username or score object'
 
-    if req.body.beatmap? and not req.body.mode
+    if req.body.beatmap? and not req.body.mode?
         return handleSubmitError next, req, _.badRequest 'when using custom beatmap object, mode is required'
 
     gameMode = req.body.mode
@@ -147,7 +147,7 @@ router.post '/submit', (req, res, next) ->
         beatmap = req.body.beatmap
 
     gameMode = +gameMode
-    if isNaN(gameMode) or (gameMode < 0) or (gameMode > 3)
+    if isNaN(gameMode) or (gameMode < 0) or (gameMode > 3) or (Math.round(gameMode) isnt gameMode)
         return handleSubmitError next, req, _.badRequest 'invalid gamemode'
 
     # get score
@@ -208,6 +208,7 @@ router.post '/submit', (req, res, next) ->
         score = req.body.score
         score.date = Util.convertDateStringToDateObject score.date
         return handleSubmitError next, req, _.badRequest 'date value is invalid' if not score.date
+        return handleSubmitError next, req, _.badRequest 'rank value is invalid' if not Util.checkOsuRankValueValid score.rank
 
     # grab the new.ppy.sh cover of the beatmap to start with
     await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg

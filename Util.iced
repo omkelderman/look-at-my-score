@@ -27,5 +27,9 @@ convertDateStringToDateObject = (str) ->
     # valid date!
     return date
 
+VALID_RANK_VALUES = ['X', 'XH', 'S', 'SH', 'A', 'B', 'C', 'D']
+checkOsuRankValueValid = (r) -> VALID_RANK_VALUES.indexOf(r) != -1
+
 
 module.exports.convertDateStringToDateObject = convertDateStringToDateObject
+module.exports.checkOsuRankValueValid = checkOsuRankValueValid
