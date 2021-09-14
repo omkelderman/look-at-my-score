@@ -6,6 +6,7 @@ RedisCache = require './RedisCache'
 config = require 'config'
 PathConstants = require './PathConstants'
 {logger} = require './Logger'
+uuidV4 = require 'uuid/v4'
 
 CACHE_TIME = config.get 'cacheTimes.get_beatmaps'
 COVER_CACHE_DIR = PathConstants.coverCacheDir
@@ -79,6 +80,21 @@ grabCoverFromOsuServer = (beatmapSetId, done) ->
     # also store it in cache
     RedisCache.storeInCache CACHE_TIME, cacheKey, localLocation
 
+saveCustomCoverImg = (base64str, cb) ->
+    data = Buffer.from(base64str, 'base64')
+
+    await gm(data).identify defer err, imageData
+    return cb err if err
+
+    if imageData.format isnt 'JPEG' or imageData.Geometry isnt '900x250'
+        return cb null, null
+
+    imageId = uuidV4()
+    filepath = path.resolve COVER_CACHE_DIR, imageId
+    await fs.writeFile filepath, data, defer err
+    return cb err if err
+    return cb null, filepath
 
 module.exports =
     grabCoverFromOsuServer: grabCoverFromOsuServer
+    saveCustomCoverImg: saveCustomCoverImg

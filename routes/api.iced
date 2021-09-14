@@ -60,7 +60,7 @@ handleSubmitSuccess = (req, res, data) ->
     res.json data
 
 
-renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFromOsrFile) ->
+renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFromOsrFile, isCustomCover) ->
     # one last final check: mods
     return handleSubmitError next, req, _.badRequest 'too many mods enabled, if this is a legit score, please contact me!' if not OsuScoreBadgeCreator.isValidModAmount +score.enabled_mods
 
@@ -70,6 +70,13 @@ renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFro
     tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
 
     await OsuScoreBadgeCreator.create coverJpg, beatmap, gameMode, score, tmpPngLocation, defer err, stdout, stderr, gmCommand
+
+    # remove the cover image if it was a custom one, even before we handle the error from OsuScoreBadgeCreator.create since we wanna delete it regardless if it failed or not
+    if isCustomCover
+        fs.unlink coverJpg, (unlinkErr) ->
+            if unlinkErr
+                logger.error {err:unlinkErr}, 'error removing custom cover from disk'
+
     # if img gen failed, lets imidiately return
     return handleSubmitError next, req, _.internalServerError 'error while generating image', err, {stdout: stdout, stderr: stderr, gmCommand: gmCommand} if err
 
@@ -117,6 +124,7 @@ router.post '/submit', (req, res, next) ->
     #  - mode
     # optional:
     #  - include_recent (if supplied, fetch score data from user_recent instead of scores, will be ignored if beatmap_id is unknown)
+    #  - bg: base64 encoded image to be used as background
     #
     # additional requirements:
     #  - if 'username' is supplied instead of 'score', it is required to use the 'beatmap_id' option instead of 'beatmap'
@@ -210,11 +218,19 @@ router.post '/submit', (req, res, next) ->
         return handleSubmitError next, req, _.badRequest 'date value is invalid' if not score.date
         return handleSubmitError next, req, _.badRequest 'rank value is invalid' if not Util.checkOsuRankValueValid score.rank
 
-    # grab the new.ppy.sh cover of the beatmap to start with
-    await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
-    return handleSubmitError next, req, _.coverError err if err
+    # if body.bg exists, save it to disk, dont do the CoverCache stuff, and delete it after the render is done
+    if req.body.bg?
+        await CoverCache.saveCustomCoverImg req.body.bg, defer err, coverJpg
+        return handleSubmitError next, req, _.internalServerError 'error saving custom cover to disk', err if err
+        return handleSubmitError next, req, _.badRequest 'custom background image is not jpg or not 900x250' if not coverJpg
+        isCustomCover = true
+    else
+        # grab the new.ppy.sh cover of the beatmap to start with
+        await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
+        return handleSubmitError next, req, _.coverError err if err
+        isCustomCover = false
 
-    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, false
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, false, isCustomCover
 
 createScoreObjFromOsrData = (data) ->
     return {
@@ -261,7 +277,7 @@ router.post '/submit-osr', (req, res, next) ->
     pp = +req.body.score_pp
     if pp
         score.pp = pp
-    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, true
+    renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, true, false
 
 router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
