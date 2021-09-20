@@ -6,6 +6,7 @@ RedisCache = require './RedisCache'
 PathConstants = require './PathConstants'
 OsuMods = require './OsuMods'
 OsuAcc = require './OsuAcc'
+opentype = require 'opentype.js'
 
 # constants
 COLOR1 = '#eee'
@@ -17,6 +18,9 @@ COLOR3_STROKE = '#fff'
 COLOR_WATERMARK = '#ccc'
 COLOR_WATERMARK_BLUR = '#000'
 
+# font size of the beatmap version string, needed globally cuz we also need it for calculating the pixel width
+VERSION_FONT_SIZE = 22
+
 # read fonts
 FONTFILE_REGEX = /^Exo2\-(.+)\.ttf$/
 FONTS = {}
@@ -24,6 +28,14 @@ for file in fs.readdirSync path.resolve PathConstants.inputDir, 'fonts'
     result = FONTFILE_REGEX.exec file
     if result
         FONTS[result[1]] = path.resolve PathConstants.inputDir, 'fonts', file
+OPENTYPE_CACHE = new Map()
+getFont = (fontPath, cb) =>
+    fromCache = OPENTYPE_CACHE.get fontPath
+    return cb null, fromCache if fromCache
+    opentype.load fontPath, (err, font) ->
+        return cb err if err
+        OPENTYPE_CACHE.set(fontPath, font)
+        cb null, font
 
 # read overlays
 OVERLAYS = {}
@@ -36,6 +48,8 @@ RANKINGS = {}
 for file in fs.readdirSync path.resolve PathConstants.inputDir, 'ranking'
     if file.endsWith '.png'
         RANKINGS[file[...-4]] = path.resolve PathConstants.inputDir, 'ranking', file
+
+STAR_ICON = path.resolve PathConstants.inputDir, 'star.png'
 
 addThousandSeparators = (number, character) ->
     # make sure its a string
@@ -134,7 +148,7 @@ formatDate = (d) -> d.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UT
 
 escapeText = (str) -> str.replace '%', '%%'
 
-drawAllTheText = (img, beatmap, mode, score, accStr, blurColor, ppTextSuffix) ->
+drawAllTheText = (img, beatmap, mode, score, accStr, blurColor, ppTextSuffix, beatmapVersionPxWidth) ->
     img
         # draw hit-amounts
         .font(FONTS.ExtraBold)
@@ -181,10 +195,18 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor, ppTextSuffix) ->
     if not blurColor
         img.stroke ''
 
+    VERSION_Y = 86
     img.fill(if blurColor then COLOR_BLUR else COLOR1)
-        .fontSize(22)
+        .fontSize(VERSION_FONT_SIZE)
         .font(FONTS.Italic)
-        .drawText(190, 85, escapeText(beatmap.version))
+        .drawText(190, VERSION_Y, escapeText(beatmap.version))
+
+    # draw star value
+    starValue = +beatmap.difficultyrating
+    if starValue
+        img
+            .font(FONTS.Regular)
+            .drawText(240 + beatmapVersionPxWidth, VERSION_Y, starValue.toFixed(2))
 
     # draw some watermark thingy
     img.fill(if blurColor then COLOR_WATERMARK_BLUR else COLOR_WATERMARK)
@@ -257,7 +279,7 @@ isValidScoreObj = (obj) -> isValidObj obj, SCORE_OBJ_REQ_PROPS
 BEATMAP_OBJ_REQ_PROPS = ['title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> isValidObj obj, BEATMAP_OBJ_REQ_PROPS
 
-createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix) ->
+createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix, beatmapVersionPxWidth) ->
     # calc some shit and fetch some additional details
     overlayImagePath = OVERLAYS[gameMode]
     throw new Error "Render error: unknown gamemode '#{gameMode}'" if not overlayImagePath
@@ -278,7 +300,7 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix) ->
     img = gm bgImg
 
     # draw all text for background-blur
-    drawAllTheText img, beatmap, gameMode, score, accStr, true, ppTextSuffix
+    drawAllTheText img, beatmap, gameMode, score, accStr, true, ppTextSuffix, beatmapVersionPxWidth
 
     # blur it
     img.blur(0,4.3)
@@ -287,7 +309,7 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix) ->
     img.fill('#0007').drawRectangle 0, 0, 900, 250
 
     # draw all the text again, but now for real
-    drawAllTheText img, beatmap, gameMode, score, accStr, false, ppTextSuffix
+    drawAllTheText img, beatmap, gameMode, score, accStr, false, ppTextSuffix, beatmapVersionPxWidth
 
     # lets draw some additional bits
     rankingOffset = if enabled_mods is 0 then 40 else 20
@@ -298,6 +320,10 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix) ->
 
         # and draw the "hit-objects" and mode-icon
         .draw("image Over 0,0 0,0 #{overlayImagePath}")
+
+    if +beatmap.difficultyrating
+        # and draw the star icon for beatmap star value
+        img.draw "image Over #{210 + beatmapVersionPxWidth},65 0,0 #{STAR_ICON}"
 
     # add mods
     drawMods img, enabled_mods
@@ -311,8 +337,13 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, outputFile, ppTextSuffix
     # make sure gameMode is a number
     gameMode = +gameMode
 
+    await getFont FONTS.Italic, defer err, fontItalic
+    return done err if err
+
+    beatmapVersionPxWidth = fontItalic.getAdvanceWidth(beatmap.version, VERSION_FONT_SIZE)
+
     try
-        img = createGmDrawCommandChain bgImg, beatmap, gameMode, score, ppTextSuffix
+        img = createGmDrawCommandChain bgImg, beatmap, gameMode, score, ppTextSuffix, beatmapVersionPxWidth
     catch imgCreateError
         return done imgCreateError
 
