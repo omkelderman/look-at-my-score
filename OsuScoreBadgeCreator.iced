@@ -254,7 +254,7 @@ isValidObj = (obj, requiredKeys) -> (obj isnt null) and (typeof obj is 'object')
 SCORE_OBJ_REQ_PROPS = ['date', 'enabled_mods', 'count50', 'count100', 'count300', 'countmiss', 'countkatu', 'countgeki', 'score', 'maxcombo', 'username']
 isValidScoreObj = (obj) -> isValidObj obj, SCORE_OBJ_REQ_PROPS
 
-BEATMAP_OBJ_REQ_PROPS = ['max_combo', 'title', 'artist', 'creator', 'version']
+BEATMAP_OBJ_REQ_PROPS = ['title', 'artist', 'creator', 'version']
 isValidBeatmapObj = (obj) -> isValidObj obj, BEATMAP_OBJ_REQ_PROPS
 
 createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix) ->
