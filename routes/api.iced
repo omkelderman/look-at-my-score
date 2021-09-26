@@ -143,7 +143,8 @@ router.post '/submit', (req, res, next) ->
     # get beatmap
     if req.body.beatmap_id?
         # get beatmap
-        await OsuApi.getBeatmap req.body.beatmap_id, gameMode, defer err, beatmap
+        # TODO mods
+        await OsuApi.getBeatmap req.body.beatmap_id, gameMode, 0, defer err, beatmap
         return handleSubmitError next, req, _.osuApiServerError err if err
         return handleSubmitError next, req, _.notFound 'beatmap does not exist' if not beatmap
 
@@ -264,9 +265,11 @@ router.post '/submit-osr', (req, res, next) ->
 
     gameMode = req.file.osrData.gameMode
     beatmapHash = req.file.osrData.beatmapMd5
+    score = createScoreObjFromOsrData req.file.osrData
+    pp = +req.body.score_pp
 
     # get beatmap
-    await OsuApi.getBeatmapByHash beatmapHash, gameMode, defer err, beatmap
+    await OsuApi.getBeatmapByHash beatmapHash, gameMode, score.enabled_mods, defer err, beatmap
     return handleSubmitError next, req, _.osuApiServerError err if err
     return handleSubmitError next, req, _.notFound 'beatmap does not exist' if not beatmap
 
@@ -274,8 +277,6 @@ router.post '/submit-osr', (req, res, next) ->
     await CoverCache.grabCoverFromOsuServer beatmap.beatmapset_id, defer err, coverJpg
     return handleSubmitError next, req, _.coverError err if err
 
-    score = createScoreObjFromOsrData req.file.osrData
-    pp = +req.body.score_pp
     if pp
         score.pp = pp
     renderImageResponse req, res, next, coverJpg, beatmap, gameMode, score, true, false, null
@@ -319,7 +320,7 @@ router.get '/diffs/:set_id([0-9]+)', (req, res, next) ->
 beatmapHandler = (req, res, next) ->
     beatmapId = req.params.beatmap_id
     mode = req.params.mode
-    await OsuApi.getBeatmap beatmapId, mode, defer err, beatmap
+    await OsuApi.getBeatmap beatmapId, mode, 0, defer err, beatmap
     return next _.osuApiServerError err if err
     return next _.notFound 'no beatmap found with that id' if not beatmap
 
