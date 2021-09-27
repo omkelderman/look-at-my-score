@@ -151,10 +151,12 @@ router.post '/submit', (req, res, next) ->
         if not gameMode?
             # mode was not supplied, get it from beatmap object
             gameMode = beatmap.mode
+        beatmapObjectIsCustom = false
     else
         # no beatmap_id, so beatmap object must be supplied
         return handleSubmitError next, req, _.badRequest 'beatmap parameters not valid' if not OsuScoreBadgeCreator.isValidBeatmapObj req.body.beatmap
         beatmap = req.body.beatmap
+        beatmapObjectIsCustom = true
 
     gameMode = +gameMode
     if isNaN(gameMode) or (gameMode < 0) or (gameMode > 3) or (Math.round(gameMode) isnt gameMode)
@@ -195,21 +197,39 @@ router.post '/submit', (req, res, next) ->
             # oh no, multiple scores, dunno what to do, ask user
             scores.sort (a, b) -> b.date - a.date
             logger.info 'MULTIPLE SCORES'
+
+            # fetch beatmap values per mod to have star values for each mod combination
+            beatmaps = []
+            textData = []
+            for score,i in scores
+                if score.enabled_mods > 0
+                    await OsuApi.getBeatmap beatmapId, gameMode, score.enabled_mods, defer err, beatmapForScore
+                    return handleSubmitError next, req, _.osuApiServerError err if err
+                    return handleSubmitError next, req, _.notFound 'beatmap does not exist' if not beatmapForScore
+                else
+                    # we are in the flow of handling username, aka server provided scores
+                    # in this flow it is forbidden to provide your own custom beatmap object
+                    # which means we are guaranteed that the beatmap variable comes from the server
+                    # and its nomod
+                    beatmapForScore = beatmap
+
+                beatmaps[i] = beatmapForScore
+                textData[i] = [
+                    score.date.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
+                    (+beatmapForScore.difficultyrating).toFixed(2)
+                    score.score
+                    OsuAcc.getAccStr(gameMode, score) + '%'
+                    score.maxcombo
+                    if score.pp then (+score.pp).toFixed(2) + ' pp' else ''
+                    OsuMods.toModsStrLong(score.enabled_mods)
+                ]
             return handleSubmitSuccess req, res,
                 result: 'multiple-scores'
                 data:
-                    beatmap: beatmap
+                    beatmaps: beatmaps
                     mode: gameMode
                     scores: scores
-                    textData: scores.map (score) ->
-                        return [
-                            score.date.toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' UTC'
-                            score.score
-                            OsuAcc.getAccStr(gameMode, score) + '%'
-                            score.maxcombo
-                            if score.pp then (+score.pp).toFixed(2) + ' pp' else ''
-                            OsuMods.toModsStrLong(score.enabled_mods)
-                        ]
+                    textData: textData
 
         score = scores[0]
     else
@@ -219,6 +239,13 @@ router.post '/submit', (req, res, next) ->
         score.date = Util.convertDateStringToDateObject score.date
         return handleSubmitError next, req, _.badRequest 'date value is invalid' if not score.date
         return handleSubmitError next, req, _.badRequest 'rank value is invalid' if not Util.checkOsuRankValueValid score.rank
+    
+    if not(beatmapObjectIsCustom) and (score.enabled_mods > 0)
+        # refetch the beatmap to incorporate score mods so we have correct star values
+        # if its a custom object we cannot refresh, if its nomod no need to refresh
+        await OsuApi.getBeatmap beatmap.beatmap_id, gameMode, score.enabled_mods, defer err, beatmap
+        return handleSubmitError next, req, _.osuApiServerError err if err
+        return handleSubmitError next, req, _.notFound 'beatmap does not exist' if not beatmap
 
     # if body.bg exists, save it to disk, dont do the CoverCache stuff, and delete it after the render is done
     if req.body.bg?

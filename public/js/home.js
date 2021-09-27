@@ -125,7 +125,7 @@ function fillScoresMenu(data) {
             .attr('type', 'button')
             .addClass('btn btn-default')
             .text('Pick')
-            .click({beatmap: data.beatmap, mode: data.mode, score: data.scores[i]}, handleChooseScore)
+            .click({beatmap: data.beatmaps[i], mode: data.mode, score: data.scores[i]}, handleChooseScore)
         );
 
         var $tds = data.textData[i].map(function(txt) {
