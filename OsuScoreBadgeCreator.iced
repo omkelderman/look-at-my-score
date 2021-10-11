@@ -6,6 +6,7 @@ RedisCache = require './RedisCache'
 PathConstants = require './PathConstants'
 OsuMods = require './OsuMods'
 OsuAcc = require './OsuAcc'
+Util = require './Util'
 opentype = require 'opentype.js'
 
 # constants
@@ -21,13 +22,21 @@ COLOR_WATERMARK_BLUR = '#000'
 # font size of the beatmap version string, needed globally cuz we also need it for calculating the pixel width
 VERSION_FONT_SIZE = 22
 
-# read fonts
+# constants
 FONTFILE_REGEX = /^Exo2\-(.+)\.ttf$/
 FONTS = {}
-for file in fs.readdirSync path.resolve PathConstants.inputDir, 'fonts'
-    result = FONTFILE_REGEX.exec file
-    if result
-        FONTS[result[1]] = path.resolve PathConstants.inputDir, 'fonts', file
+OVERLAYS = {}
+RANKINGS = {}
+STAR_ICON = path.resolve PathConstants.inputDir, 'star.png'
+IMAGE_WIDTH = 900
+IMAGE_HEIGHT = 250
+
+RANK_IMAGE_WIDTH = 148
+RANK_IMAGE_HEIGHT = 178
+
+STAR_IMAGE_WIDTH = 24
+STAR_IMAGE_HEIGHT = 24
+
 OPENTYPE_CACHE = new Map()
 getFont = (fontPath, cb) =>
     fromCache = OPENTYPE_CACHE.get fontPath
@@ -37,19 +46,49 @@ getFont = (fontPath, cb) =>
         OPENTYPE_CACHE.set(fontPath, font)
         cb null, font
 
-# read overlays
-OVERLAYS = {}
-for file in fs.readdirSync path.resolve PathConstants.inputDir, 'overlay'
-    if file.endsWith '.png'
-        OVERLAYS[file[...-4]] = path.resolve PathConstants.inputDir, 'overlay', file
+init = (cb) ->
+    await OsuMods.init defer err
+    return cb err if err
 
-# read rankings
-RANKINGS = {}
-for file in fs.readdirSync path.resolve PathConstants.inputDir, 'ranking'
-    if file.endsWith '.png'
-        RANKINGS[file[...-4]] = path.resolve PathConstants.inputDir, 'ranking', file
+    # read fonts
+    await fs.readdir path.resolve(PathConstants.inputDir, 'fonts'), defer err, fontList
+    return cb err if err
+    for file in fontList
+        result = FONTFILE_REGEX.exec file
+        if result
+            FONTS[result[1]] = path.resolve PathConstants.inputDir, 'fonts', file
+            
 
-STAR_ICON = path.resolve PathConstants.inputDir, 'star.png'
+    # read overlays
+    await fs.readdir path.resolve(PathConstants.inputDir, 'overlay'), defer err, overlayList
+    return cb err if err
+    for file in overlayList
+        if file.endsWith '.png'
+            overlayImagePath = path.resolve PathConstants.inputDir, 'overlay', file
+            await Util.checkImageSize overlayImagePath, IMAGE_WIDTH, IMAGE_HEIGHT, defer err, sizeOk
+            return cb err if err
+            if not sizeOk
+                return cb new Error("File '#{overlayImagePath}' does not have the correct size")
+            OVERLAYS[file[...-4]] = overlayImagePath
+
+    # read rankings
+    await fs.readdir path.resolve(PathConstants.inputDir, 'ranking'), defer err, rankingsList
+    return cb err if err
+    for file in rankingsList
+        if file.endsWith '.png'
+            rankImagePath = path.resolve PathConstants.inputDir, 'ranking', file
+            await Util.checkImageSize rankImagePath, RANK_IMAGE_WIDTH, RANK_IMAGE_HEIGHT, defer err, sizeOk
+            return cb err if err
+            if not sizeOk
+                return cb new Error("File '#{rankImagePath}' does not have the correct size")
+            RANKINGS[file[...-4]] = rankImagePath
+    
+    await Util.checkImageSize STAR_ICON, STAR_IMAGE_WIDTH, STAR_IMAGE_HEIGHT, defer err, sizeOk
+    return cb err if err
+    if not sizeOk
+        return cb new Error("File '#{STAR_ICON}' does not have the correct size")
+
+    cb null
 
 addThousandSeparators = (number, character) ->
     # make sure its a string
@@ -252,6 +291,14 @@ drawAllTheText = (img, beatmap, mode, score, accStr, blurColor, ppTextSuffix, be
         if not blurColor
             img.stroke ''
 
+drawOverlayImage = (img, x, y, w, h, overlayImagePath) ->
+    # lol replace is only needed on windows
+    # it has backslahes in path and then if for whatever reason there was "\r" in the path (eg input\ranking\S.png)
+    # it would interpret that as a carriage return, escaling the \ didnt help...
+    # so I'll just convert all backslages to forward slashes cuz yolo
+    overlayImagePath = '"' + overlayImagePath.trim().replace(/\\/g, '/') + '"'
+    img.draw "image Over #{x},#{y} #{w},#{h} #{overlayImagePath}"
+
 drawMods = (img, mods) ->
     modsArr = OsuMods.bitmaskToModArray mods
     for mod, i in modsArr
@@ -262,7 +309,7 @@ drawMod = (img, mod, i, totalSize) ->
     x = calcModDrawOffset totalSize, i
     if x < 0
         throw new Error 'Render error: too many mods to draw'
-    img.draw "image Over #{x},195 0,0 #{OsuMods.getImagePath(mod)}"
+    drawOverlayImage img, x, 195, OsuMods.IMAGE_WIDTH, OsuMods.IMAGE_HEIGHT, OsuMods.getImagePath(mod)
 
 isValidModAmount = (mods) ->
     amountOfMods = OsuMods.bitmaskToModArray(mods).length
@@ -306,7 +353,7 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix, beatm
     img.blur(0,4.3)
 
     # add black
-    img.fill('#0007').drawRectangle 0, 0, 900, 250
+    img.fill('#0007').drawRectangle 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT
 
     # draw all the text again, but now for real
     drawAllTheText img, beatmap, gameMode, score, accStr, false, ppTextSuffix, beatmapVersionPxWidth
@@ -314,16 +361,15 @@ createGmDrawCommandChain = (bgImg, beatmap, gameMode, score, ppTextSuffix, beatm
     # lets draw some additional bits
     rankingOffset = if enabled_mods is 0 then 40 else 20
 
-    img
-        # draw the rank
-        .draw("image Over 0,#{rankingOffset} 0,0 #{rankingImagePath}")
+    # draw the rank
+    drawOverlayImage img, 0, rankingOffset, RANK_IMAGE_WIDTH, RANK_IMAGE_HEIGHT, rankingImagePath
 
-        # and draw the "hit-objects" and mode-icon
-        .draw("image Over 0,0 0,0 #{overlayImagePath}")
+    # and draw the "hit-objects" and mode-icon
+    drawOverlayImage img, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT, overlayImagePath
 
     if +beatmap.difficultyrating
         # and draw the star icon for beatmap star value
-        img.draw "image Over #{210 + beatmapVersionPxWidth},65 0,0 #{STAR_ICON}"
+        drawOverlayImage img, 210 + beatmapVersionPxWidth, 65, STAR_IMAGE_WIDTH, STAR_IMAGE_HEIGHT, STAR_ICON
 
     # add mods
     drawMods img, enabled_mods
@@ -372,3 +418,6 @@ module.exports =
     isValidScoreObj: isValidScoreObj
     isValidBeatmapObj: isValidBeatmapObj
     isValidModAmount: isValidModAmount
+    init: init
+    IMAGE_WIDTH: IMAGE_WIDTH
+    IMAGE_HEIGHT: IMAGE_HEIGHT

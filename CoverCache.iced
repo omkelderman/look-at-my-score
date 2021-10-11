@@ -7,6 +7,8 @@ config = require 'config'
 PathConstants = require './PathConstants'
 {logger} = require './Logger'
 { v4: uuidV4 } = require 'uuid'
+OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
+Util = require './Util'
 
 CACHE_TIME = config.get 'cacheTimes.get_beatmaps'
 COVER_CACHE_DIR = PathConstants.coverCacheDir
@@ -73,6 +75,11 @@ grabCoverFromOsuServer = (beatmapSetId, done) ->
         pipe.once 'finish', () -> pipeDone()
         pipe.once 'error', (err) -> pipeDone err
     return done err if err
+
+    await Util.checkImageSize localLocation, OsuScoreBadgeCreator.IMAGE_WIDTH, OsuScoreBadgeCreator.IMAGE_HEIGHT, defer err, sizeOk
+    return cb err if err
+    if not sizeOk
+        return done new Error('The cover.jpg from osu! servers has an unexpected size')
 
     # all gud, lets give it back right now, no need to wait for redis right
     done null, localLocation

@@ -9,6 +9,7 @@ config = require 'config'
 redis = require 'redis'
 RedisCache = require './RedisCache'
 PathConstants = require './PathConstants'
+OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
 
 # redis
 redisConfig = config.get 'redis'
@@ -25,6 +26,12 @@ if redisConfig
 
     # init the things
     RedisCache.init redisClient
+
+logger.info 'input files initializing...'
+await OsuScoreBadgeCreator.init defer err
+if err
+    logger.error {err: err}, 'Error initializing input files'
+logger.info 'input files initialized'
 
 # setup routes
 ROUTE_MOUNTS =

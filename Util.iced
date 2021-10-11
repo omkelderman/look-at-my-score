@@ -1,3 +1,5 @@
+gm = require 'gm'
+
 MYSQL_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
 ISO_UTC_DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/
 
@@ -30,6 +32,11 @@ convertDateStringToDateObject = (str) ->
 VALID_RANK_VALUES = ['X', 'XH', 'S', 'SH', 'A', 'B', 'C', 'D']
 checkOsuRankValueValid = (r) -> VALID_RANK_VALUES.indexOf(r) != -1
 
+checkImageSize = (im, width, height, cb) ->
+    await gm(im).identify defer err, imageData
+    return cb err if err
+    cb null, imageData.size.width is width and imageData.size.height is height
 
 module.exports.convertDateStringToDateObject = convertDateStringToDateObject
 module.exports.checkOsuRankValueValid = checkOsuRankValueValid
+module.exports.checkImageSize = checkImageSize
