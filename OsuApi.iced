@@ -8,7 +8,7 @@ RateLimiter = require('limiter').RateLimiter
 CACHE_TIMES = config.get 'cacheTimes'
 LIMITER = new RateLimiter(config.get('osu-api.rateLimit'))
 
-VALID_MODS_FOR_DIFF_VALUES = 2|16|64|256|32768|65536|131072|262144|524288|16777216 # EZ + HR + DT + HT + K4 + K5 + K6 + K7 + K8 + K9
+VALID_MODS_FOR_DIFF_VALUES = 2|16|64|256|1024|32768|65536|131072|262144|524288|16777216 # EZ + HR + DT + HT + FL + K4 + K5 + K6 + K7 + K8 + K9
 filterModsForApi = (mods) -> mods & VALID_MODS_FOR_DIFF_VALUES
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
