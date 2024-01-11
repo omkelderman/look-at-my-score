@@ -5,15 +5,15 @@ config = require 'config'
 PathConstants = require './PathConstants'
 path = require 'path'
 
-BunyanTelegramBotLogger = require './BunyanTelegramBotLogger'
+BunyanDiscordWebhookErrorLogger = require './BunyanDiscordWebhookErrorLogger'
 
 logStreams = [
     {level: 0, type: 'raw', stream: bunyanDebugStream.create {basepath: __dirname}}
     {level: config.get('log.level'), path: path.resolve(PathConstants.logDir, 'app.log')}
 ]
 
-if config.get('telegram.botToken')
-    logStreams.push {level: 'error', stream: new BunyanTelegramBotLogger(config.get('telegram.botToken'), config.get('telegram.chatId'))}
+if config.get('discord.errorLogWebhook.id')
+    logStreams.push {level: 'error', stream: new BunyanDiscordWebhookErrorLogger(config.get('discord.errorLogWebhook.id'), config.get('discord.errorLogWebhook.secret'))}
 
 logger = bunyan.createLogger
     name: 'app'

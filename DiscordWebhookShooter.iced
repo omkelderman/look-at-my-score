@@ -1,20 +1,11 @@
-{logger} = require './Logger'
+# this module is used in the logger logic, so we're not allowed to use the logger here
 
 request = require 'request'
-config = require 'config'
-
-if config.get('discord.webhook.id')
-    WEBHOOK_URL = "https://discordapp.com/api/webhooks/#{config.get('discord.webhook.id')}/#{config.get('discord.webhook.secret')}"
-
-    shootWebhook = (hookData) ->
-        request.post {url: WEBHOOK_URL, qs: {wait: true}, json: hookData}, (err, res, body) ->
-            if err
-                logger.error {err: err}, 'Error while shooting discord webhook'
-            else if res.statusCode isnt 200
-                logger.error {res: res, body: body}, 'Error while shooting discord webhook: unexpected response-code: ' + res.statusCode
-            else
-                logger.info {id: body.id}, 'Hook success'
-else
-    shootWebhook = () -> #no-op
-
-module.exports.shoot = shootWebhook
+module.exports.shoot = (id, secret, hookData, cb) ->
+    request.post {url: "https://discord.com/api/webhooks/#{id}/#{secret}", qs: {wait: true}, json: hookData}, (err, res, body) ->
+        if err
+            cb err, body
+        else if res.statusCode isnt 200
+            cb new Error("Unexpected response-code: #{res.statusCode}"), body
+        else
+            cb null, body

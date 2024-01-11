@@ -8,10 +8,9 @@ discord:
     webhook:
         id: 0
         secret: null
-
-telegram:
-    botToken: null
-    chatId: null
+    errorLogWebhook:
+        id: 0
+        secret: null
 
 http:
     # eiher a tcp-port-nr to listen on or a path to a unix-socket

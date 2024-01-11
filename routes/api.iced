@@ -18,29 +18,38 @@ _ = require './_shared'
 DiscordWebhookShooter = require '../DiscordWebhookShooter'
 Util = require '../Util'
 
-postDiscordWebhook = (artist, title, creator, diff, beatmapId, date, imageUrl, username, userId) ->
-    webhook =
-        username: 'Look At My Score'
-        content: 'New image just got generated!'
-        embeds: [{
-            title: "#{artist} - #{title} (#{creator}) [#{diff}]"
-            description: '_[LookAtMySco.re](https://lookatmysco.re/)_'
-            timestamp: date
-            image:
-                url: imageUrl
-            footer:
-                text: 'Generated'
-            author:
-                name: username
-        }]
+if config.get('discord.webhook.id')
+    webhookId = config.get('discord.webhook.id')
+    webhookSecret = config.get('discord.webhook.secret')
+    postDiscordWebhook = (artist, title, creator, diff, beatmapId, date, imageUrl, username, userId) ->
+        webhook =
+            username: 'Look At My Score'
+            content: 'New image just got generated!'
+            embeds: [{
+                title: "#{artist} - #{title} (#{creator}) [#{diff}]"
+                description: '_[LookAtMySco.re](https://lookatmysco.re/)_'
+                timestamp: date
+                image:
+                    url: imageUrl
+                footer:
+                    text: 'Generated'
+                author:
+                    name: username
+            }]
 
-    if beatmapId
-        webhook.embeds[0].url = 'https://osu.ppy.sh/b/' + beatmapId
-    if userId
-        webhook.embeds[0].author.url = 'https://osu.ppy.sh/u/' + userId
-        webhook.embeds[0].author.icon_url = 'https://a.ppy.sh/' + userId
+        if beatmapId
+            webhook.embeds[0].url = 'https://osu.ppy.sh/b/' + beatmapId
+        if userId
+            webhook.embeds[0].author.url = 'https://osu.ppy.sh/u/' + userId
+            webhook.embeds[0].author.icon_url = 'https://a.ppy.sh/' + userId
 
-    DiscordWebhookShooter.shoot webhook
+        DiscordWebhookShooter.shoot webhookId, webhookSecret, webhook, (err, body) ->
+            if err
+                logger.error {err: err, body: body}, 'Error while shooting discord new image webhook'
+            else
+                logger.info {id: body.id}, 'New image discord webhook success'
+else
+    postDiscordWebhook = () -> #no-op
 
 router = express.Router()
 

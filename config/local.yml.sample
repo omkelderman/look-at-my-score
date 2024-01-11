@@ -3,12 +3,11 @@ osu-api:
 
 discord:
     webhook:
-        id: <DISCORD WEBHOOK ID HERE>
+        id: <DISCORD WEBHOOK ID HERE> (put as string cuz javascript numbers kekw)
         secret: <DISCORD WEBHOOK SECRET HERE>
-
-telegram:
-    botToken: <TELEGRAM BOT-TOKEN HERE>
-    chatId: <TELEGRAM CHAT-ID HERE>
+    errorLogWebhook:
+        id: <DISCORD WEBHOOK ID HERE> (put as string cuz javascript numbers kekw)
+        secret: <DISCORD WEBHOOK SECRET HERE>
 
 # to run on tcp port instead uncommend the following:
 #http:
