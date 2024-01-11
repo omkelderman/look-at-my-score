@@ -10,8 +10,10 @@ router.use (req, res, next) ->
     res.locals.gaCode = config.get 'gaCode'
     next()
 
+RESULT_TEMPLATES = config.get 'resultTemplates'
 router.get '/', (req, res, next) ->
     res.render 'pages/home',
+        resultTemplates: RESULT_TEMPLATES
         mods: OsuMods.allById
 
 router.get '/about', (req, res) ->

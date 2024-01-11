@@ -50,3 +50,21 @@ gaCode: UA-44234598-3
 log:
     dir: log
     level: info
+
+resultTemplates:
+  - id: 'result-direct-img-url'
+    name: 'Direct image url'
+    size: 'lg'
+    template: '{imgage-url}'
+  - id: 'result-bb-code'
+    name: 'BBCode'
+    size: 'sm'
+    template: '[url={website-url}][img]{imgage-url}[/img][/url]'
+  - id: 'result-markdown'
+    name: 'Markdown'
+    size: 'sm'
+    template: '[![]({imgage-url})]({website-url})'
+  - id: 'result-html'
+    name: 'HTML'
+    size: 'sm'
+    template: '<a href="{website-url}"><img src="{imgage-url}"></a>'

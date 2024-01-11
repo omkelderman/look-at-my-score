@@ -8,15 +8,6 @@ block append js
         script(type='text/javascript', src='/js/clipboard.min.js')
         script(type='text/javascript', src='/js/home.js')
         
-mixin result-input-box(size, id, text, template)
-    .form-group(class='form-group-' + size)
-        label.col-sm-2.control-label(for=id)= text
-        .col-sm-10.input-group(class='input-group-' + size)
-            input.form-control(id=id, type='text', data-result-template=template)
-            span.input-group-btn
-                button.btn.btn-default.copy-to-clipboard-btn(type='button', data-clipboard-target='#' + id, data-toggle='tooltip', data-placement='right', title='Copy to Clipboard')
-                    img(src='/images/clippy.svg', alt='Copy to clipboard')
-
 block content
     p
         | Ever had that amazing, mind-bending, supertastic osu! play? Now you can tell all your friends: "Hey! #[strong.hype Look At My Score!]"
@@ -176,10 +167,14 @@ block content
                     .progress.progress-striped.active
                         .progress-bar(role='progressbar', aria-valuenow=100, aria-valuemin=0, aria-valuemax=100) Fetching data and generating image...
                 #result-ok.form-horizontal
-                    +result-input-box('lg', 'result-direct-img-url', 'Direct image url', '{imgage-url}')
-                    +result-input-box('sm', 'result-bb-code', 'BBCode', '[url={website-url}][img]{imgage-url}[/img][/url]')
-                    +result-input-box('sm', 'result-markdown', 'Markdown', '[![]({imgage-url})]({website-url})')
-                    +result-input-box('sm', 'result-html', 'HTML', '<a href="{website-url}"><img src="{imgage-url}"></a>')
+                    each template in resultTemplates
+                        .form-group(class='form-group-' + template.size)
+                            label.col-sm-2.control-label(for=template.id)= template.name
+                            .col-sm-10.input-group(class='input-group-' + template.size)
+                                input.form-control(id=template.id, type='text', data-result-template=template.template)
+                                span.input-group-btn
+                                    button.btn.btn-default.copy-to-clipboard-btn(type='button', data-clipboard-target='#' + template.id, data-toggle='tooltip', data-placement='right', title='Copy to Clipboard')
+                                        img(src='/images/clippy.svg', alt='Copy to clipboard')
                 #result-error.row
                     #result-error-header.col-md-1 Error
                     #result-error-text.col-md-11.text-center
