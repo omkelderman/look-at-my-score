@@ -8,8 +8,9 @@ RateLimiter = require('limiter').RateLimiter
 CACHE_TIMES = config.get 'cacheTimes'
 LIMITER = new RateLimiter(config.get('osu-api.rateLimit'))
 
+# TODO write a mods filter that is gamemode aware and does gamemode specific logic (also this logic should probably be moved to OsuMods.iced)
 VALID_MODS_FOR_DIFF_VALUES = 2|16|64|256|1024|32768|65536|131072|262144|524288|16777216 # EZ + HR + DT + HT + FL + K4 + K5 + K6 + K7 + K8 + K9
-filterModsForApi = (mods) -> mods & VALID_MODS_FOR_DIFF_VALUES
+filterModsForApi = (mods, mode) -> mods & VALID_MODS_FOR_DIFF_VALUES
 
 buildCacheKey = (endpoint, params) -> 'api:' + endpoint + ':' + RedisCache.createCacheKeyFromObject params
 
@@ -85,22 +86,24 @@ customCacheActionForGetBeatmap = (value, originalParams, saveCallback) ->
         # mode was not supplied, store all 4 variants (with and without mode, id and hash)
         saveCustomCacheForBeatmapObject b, mods, saveCallback
 
-module.exports.getBeatmap = (id, mode, mods, done) ->
-    options =
-        b:id
-        a:1
-        mods: filterModsForApi mods
+module.exports.getBeatmap = (id, mode, mods, done) -> getBeatmapByIdOrHash id, 'b', mode, mods, done
+module.exports.getBeatmapByHash = (hash, mode, mods, done) -> getBeatmapByIdOrHash hash, 'h', mode, mods, done
+getBeatmapByIdOrHash = (idOrHash, idType, mode, mods, done) ->
+    options = a:1
+    options[idType] = idOrHash
     if mode?
         options.m = mode
-    doApiRequestAndGetFirst 'get_beatmaps', options, done, customCacheActionForGetBeatmap
+    
+    # we need the gamemode to properly filter mods for api
+    # unless nomod, since thats always just nomod
+    if mods is 0 or mods is '0'
+        options.mods = 0
+    else
+        if mode?
+            options.mods = filterModsForApi mods, mode
+        else
+            return done new Error('cannot do beatmap api request with mods without supplied gamemode')
 
-module.exports.getBeatmapByHash = (hash, mode, mods, done) ->
-    options =
-        h:hash
-        a:1
-        mods: filterModsForApi mods
-    if mode?
-        options.m = mode
     doApiRequestAndGetFirst 'get_beatmaps', options, done, customCacheActionForGetBeatmap
 
 module.exports.getBeatmapSet = (id, done) ->

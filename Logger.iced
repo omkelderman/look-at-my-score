@@ -8,7 +8,7 @@ path = require 'path'
 BunyanTelegramBotLogger = require './BunyanTelegramBotLogger'
 
 logStreams = [
-    {level: 0, type: 'raw', stream: bunyanDebugStream {basepath: __dirname}}
+    {level: 0, type: 'raw', stream: bunyanDebugStream.create {basepath: __dirname}}
     {level: config.get('log.level'), path: path.resolve(PathConstants.logDir, 'app.log')}
 ]
 

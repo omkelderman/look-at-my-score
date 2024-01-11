@@ -1,3 +1,8 @@
+# NodeJS Version Check
+semver = require 'semver'
+NODE_VERSION_TO_RUN = '^20.11.0'
+throw new Error("The current node version #{process.version} does not satisfy the required version #{NODE_VERSION_TO_RUN}.") if not semver.satisfies(process.version, NODE_VERSION_TO_RUN)
+
 {logger} = require './Logger'
 
 express = require 'express'
@@ -6,31 +11,22 @@ path = require 'path'
 morgan = require 'morgan'
 killable = require 'killable'
 config = require 'config'
-redis = require 'redis'
 RedisCache = require './RedisCache'
 PathConstants = require './PathConstants'
 OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
 
-# redis
-redisConfig = config.get 'redis'
-if redisConfig
-    redisSettings =
-        db: redisConfig.db
-        prefix: redisConfig.prefix+':'
-    if redisConfig.path
-        redisSettings.path = redisConfig.path
-    else
-        redisSettings.host = redisConfig.host
-        redisSettings.port = redisConfig.port
-    redisClient = redis.createClient redisSettings
-
-    # init the things
-    RedisCache.init redisClient
+await RedisCache.init defer err
+if err
+    logger.error {err: err}, 'Error initializing RedisCache'
+    process.exit 1
+    return
 
 logger.info 'input files initializing...'
 await OsuScoreBadgeCreator.init defer err
 if err
     logger.error {err: err}, 'Error initializing input files'
+    process.exit 1
+    return
 logger.info 'input files initialized'
 
 # setup routes
@@ -105,11 +101,7 @@ if err
 else
     logger.info 'HTTP server has been closed'
 
-if redisClient
-    # close redis connection
-    await
-        redisClient.once 'end', defer()
-        redisClient.quit()
+await RedisCache.close defer()
 
 # THE END :D
 logger.info "process with pid #{process.pid} ended gracefully :D"

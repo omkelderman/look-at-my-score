@@ -1,25 +1,26 @@
 {
   "private": true,
   "dependencies": {
-    "body-parser": "^1.19.0",
+    "body-parser": "^1.20.2",
     "bunyan": "^1.8.15",
-    "bunyan-debug-stream": "^2.0.0",
-    "config": "^3.3.6",
+    "bunyan-debug-stream": "^3.1.0",
+    "config": "^3.3.9",
     "express": "^4.17.1",
     "gm": "^1.23.1",
     "js-yaml": "^4.1.0",
     "killable": "^1.0.1",
     "limiter": "^2.1.0",
     "morgan": "^1.10.0",
-    "multer": "^1.4.3",
+    "multer": "^1.4.5-lts.1",
     "opentype.js": "^1.3.4",
     "pug": "^3.0.2",
-    "redis": "^3.1.2",
+    "redis": "^4.6.12",
     "request": "^2.88.2",
-    "uuid": "^8.3.2"
+    "semver": "^7.5.4",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "eslint": "^8.0.0",
+    "eslint": "^8.55.0",
     "iced-coffee-script": "^108.0.14"
   }
 }

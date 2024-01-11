@@ -143,7 +143,7 @@ router.post '/submit', (req, res, next) ->
     # get beatmap
     if req.body.beatmap_id?
         # get beatmap
-        # TODO mods
+        # we do not know the score info here yet, which has the selected mods, so for now just get nomod data. Later on we will refresh it with the actual mod data
         await OsuApi.getBeatmap req.body.beatmap_id, gameMode, 0, defer err, beatmap
         return handleSubmitError next, req, _.osuApiServerError err if err
         return handleSubmitError next, req, _.notFound 'beatmap does not exist' if not beatmap
