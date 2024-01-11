@@ -1,3 +1,4 @@
+{logger} = require './Logger'
 config = require 'config'
 gm = require 'gm'
 fs = require 'fs'
@@ -8,6 +9,7 @@ OsuMods = require './OsuMods'
 OsuAcc = require './OsuAcc'
 Util = require './Util'
 opentype = require 'opentype.js'
+EventEmitter = require 'events'
 
 # constants
 COLOR1 = '#eee'
@@ -397,20 +399,30 @@ createOsuScoreBadge = (bgImg, beatmap, gameMode, score, outputFile, ppTextSuffix
     # write png file
     img.write outputFile, done
 
-getGeneratedImagesAmount = (done) ->
+getGeneratedImagesAmount = (cb) ->
     await RedisCache.get 'image-count', defer isInCache, cachedResult
-    return done null, cachedResult if isInCache # yay cache exists
+    return cb null, cachedResult if isInCache # yay cache exists
+    getGeneratedImagesAmountUncached cb
 
+getGeneratedImagesAmountUncached = (cb) ->
     # ok, lets query that crap
     await fs.readdir PathConstants.dataDir, defer err, files
-    return done err if err
+    return cb err if err
     imageCount = files.reduce ((n, file) -> n + (file[-4..] is '.png')), 0
 
     # yay, report back
-    done null, imageCount
+    cb null, imageCount
 
     # and lets cache that shit for like 10 sec
     RedisCache.storeInCache 10, 'image-count', imageCount
+
+ImageCountEventEmitter = new EventEmitter()
+tryEmitNewImageCountEvent = () ->
+    await getGeneratedImagesAmountUncached defer err, newImageCount
+    return logger.err {err: err}, 'failed to fetch image count from disk' if err
+    ImageCountEventEmitter.emit('image-count', newImageCount)
+registerImageCountEventHandler = (handler) -> ImageCountEventEmitter.on('image-count', handler)
+unregisterImageCountEventHandler = (handler) -> ImageCountEventEmitter.off('image-count', handler)
 
 module.exports =
     create: createOsuScoreBadge
@@ -421,3 +433,6 @@ module.exports =
     init: init
     IMAGE_WIDTH: IMAGE_WIDTH
     IMAGE_HEIGHT: IMAGE_HEIGHT
+    tryEmitNewImageCountEvent: tryEmitNewImageCountEvent
+    registerImageCountEventHandler: registerImageCountEventHandler
+    unregisterImageCountEventHandler: unregisterImageCountEventHandler

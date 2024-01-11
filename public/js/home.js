@@ -89,32 +89,22 @@ var $inputScoreEnabledMods = $('#score_enabled_mods');
 
 var MODES = ['osu!', 'osu!taiko', 'osu!catch', 'osu!mania'];
 
-var IMAGE_COUNTER_UPDATE_MS = 10000; // 10 sec
-var imageCounterUpdaterIntervalId = 0;
+/** @type {EventSource|null} */
+var IMAGE_COUNT_EVENT_SOURCE = null;
 
-function incrementImageCounter() {
-    $imageCount.text(+$imageCount.text()+1);
-}
-
-function updateImageCounter() {
-    if(document.visibilityState !== 'visible') {
-        // not visible? no need to update
-        return;
-    }
-    $.getJSON('/api/image-count', function(data) {
-        if(data > +$imageCount.text()) {
-            console.log('new image count', data);
-            $imageCount.text(data);
-        }
+function startImageCounterUpdate() {
+    stopImageCounterUpdate();
+    IMAGE_COUNT_EVENT_SOURCE = new EventSource('/api/image-count-stream');
+    IMAGE_COUNT_EVENT_SOURCE.addEventListener('image-count', function(e) {
+        $imageCount.text(e.data);
     });
 }
 
-function startImageCounterUpdate() {
-    imageCounterUpdaterIntervalId = setInterval(updateImageCounter, IMAGE_COUNTER_UPDATE_MS);
-}
-
 function stopImageCounterUpdate() {
-    clearInterval(imageCounterUpdaterIntervalId);
+    if(IMAGE_COUNT_EVENT_SOURCE) {
+        IMAGE_COUNT_EVENT_SOURCE.close();
+        IMAGE_COUNT_EVENT_SOURCE = null;
+    }
 }
 
 function fillScoresMenu(data) {
@@ -239,7 +229,7 @@ function doThaThing(data, frm) {
                 $resultImg.attr('src', imgSrc).show();
                 setImageResult(imgSrc);
                 $contactMe.attr('href', '/contact?img-id=' + data.image.id);
-                incrementImageCounter();
+                // incrementImageCounter();
                 fireGoogleAnalyticsEvent('submit-success', gaLabel);
             } else if (data.result === 'multiple-scores') {
                 hideResult();

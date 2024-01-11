@@ -119,6 +119,7 @@ renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFro
             url: resultUrl
 
     postDiscordWebhook beatmap.artist, beatmap.title, beatmap.creator, beatmap.version, beatmap.beatmap_id, createdDate, resultUrl, score.username, score.user_id
+    OsuScoreBadgeCreator.tryEmitNewImageCountEvent()
 
 parseBoolean = (text) ->
     return text if typeof text is 'boolean'
@@ -321,6 +322,23 @@ router.get '/image-count', (req, res, next) ->
     await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
     return next _.internalServerError 'error while retrieving image count', err if err
     res.json imagesAmount
+
+router.get '/image-count-stream', (req, res, next) ->
+    await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
+    return next _.internalServerError 'error while retrieving image count', err if err
+
+    res.set 'Content-Type', 'text/event-stream'
+    res.set 'Cache-Control', 'no-cache'
+    res.set 'Connection', 'keep-alive'
+
+    sendImageCountEvent = (newImagesAmount) ->
+        res.write 'event: image-count\n'
+        res.write 'data: ' + newImagesAmount + '\n\n'
+    
+    sendImageCountEvent imagesAmount
+    
+    OsuScoreBadgeCreator.registerImageCountEventHandler sendImageCountEvent
+    req.on 'close', () -> OsuScoreBadgeCreator.unregisterImageCountEventHandler sendImageCountEvent
 
 getDefaultFromSet = (set) ->
     prevMode = set[0].mode

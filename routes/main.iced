@@ -1,5 +1,4 @@
 express = require 'express'
-OsuScoreBadgeCreator = require '../OsuScoreBadgeCreator'
 OsuMods = require '../OsuMods'
 CoverCache = require '../CoverCache'
 config = require 'config'
@@ -12,10 +11,7 @@ router.use (req, res, next) ->
     next()
 
 router.get '/', (req, res, next) ->
-    await OsuScoreBadgeCreator.getGeneratedImagesAmount defer err, imagesAmount
-    return next err if err
     res.render 'pages/home',
-        generatedImagesAmount: imagesAmount
         mods: OsuMods.allById
 
 router.get '/about', (req, res) ->
