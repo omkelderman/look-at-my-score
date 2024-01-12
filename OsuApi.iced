@@ -1,10 +1,12 @@
-request = require 'request'
+querystring = require 'querystring'
 RedisCache = require './RedisCache'
 config = require 'config'
 Util = require './Util'
 RateLimiter = require('limiter').RateLimiter
 {logger} = require './Logger'
+HttpRequester = require './HttpRequester'
 
+OSU_API_REQUESTER = new HttpRequester 'https://osu.ppy.sh/api/%s?%s', config.get('osu-api.timeout')
 CACHE_TIMES = config.get 'cacheTimes'
 LIMITER = new RateLimiter(config.get('osu-api.rateLimit'))
 
@@ -23,34 +25,26 @@ doApiRequestModifyResult = (endpoint, params, modifyResultHandler, done, customC
         return done null, cachedResult
 
     # cache didnt exist, lets get it
-    url = 'https://osu.ppy.sh/api/' + endpoint
-    logger.debug {url: url, params: params}, 'osu api request'
+    logger.debug {endpoint: endpoint, params: params}, 'osu api request'
     params.k = config.get 'osu-api.key'
     await LIMITER.removeTokens(1).then(defer())
-    await request {url:url, qs:params, json:true, gzip:true, timeout:config.get('osu-api.timeout')}, defer err, resp, body
+    qs = querystring.stringify params
+    await OSU_API_REQUESTER.getJson [endpoint, qs], defer err, result, url
     return done err if err
-    if resp.statusCode != 200
-        return done
-            message: 'osu api error'
-            detail: "osu api did not respond with http 200 OK response (was #{resp.statusCode})"
-    if not body
-        return done
-            message: 'osu api error'
-            detail: 'osu api response was invalid'
 
-    modifyResultHandler body, false if modifyResultHandler
+    modifyResultHandler result, false if modifyResultHandler
 
     # all gud, lets give it back right now, no need to wait for redis right
-    done null, body
+    done null, result
 
     # if customCacheAction, caller is responsible for storing the value in cache
     if customCacheAction
         delete params.k
-        customCacheAction body, params, (forgedParams, forgedValue) ->
+        customCacheAction result, params, (forgedParams, forgedValue) ->
             forgedKey = buildCacheKey endpoint, forgedParams
             RedisCache.storeInCache CACHE_TIMES[endpoint], forgedKey, forgedValue
     else
-        RedisCache.storeInCache CACHE_TIMES[endpoint], cacheKey, body
+        RedisCache.storeInCache CACHE_TIMES[endpoint], cacheKey, result
 
 doApiRequestAndGetFirst = (endpoint, params, done, customCacheAction) ->
     doApiRequest endpoint, params

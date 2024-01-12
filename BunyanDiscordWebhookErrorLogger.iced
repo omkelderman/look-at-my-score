@@ -11,7 +11,7 @@ class BunyanDiscordWebhookErrorLogger
 
     sendMessage: (message) ->
         message = @tryPrettyFormatJson message
-        DiscordWebhookShooter.shoot @webhookId, @webhookSecret, content: message, (err, body) ->
+        DiscordWebhookShooter.shoot @webhookId, @webhookSecret, content: message, (err) ->
             if err
                 console.error 'error while sending discord error-log webhook', err
 

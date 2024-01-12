@@ -1,3 +1,4 @@
+logWhyRunning = require 'why-is-node-running'
 # NodeJS Version Check
 semver = require 'semver'
 NODE_VERSION_TO_RUN = '^20.11.0'
@@ -92,7 +93,9 @@ process.on 'SIGTERM', -> process.emit 'requestShutdown'
 process.on 'SIGINT', -> process.emit 'requestShutdown'
 await process.once 'requestShutdown', defer()
 logger.info 'Shutting down...'
-process.on 'requestShutdown', -> logger.warn "process #{process.pid} already shutting down..."
+process.on 'requestShutdown', ->
+    logger.warn "process #{process.pid} already shutting down..."
+    logWhyRunning()
 
 # stop http-server
 await server.kill defer err

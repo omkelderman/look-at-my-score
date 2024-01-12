@@ -1,4 +1,3 @@
-request = require 'request'
 gm = require 'gm'
 fs = require 'fs'
 path = require 'path'
@@ -9,6 +8,8 @@ PathConstants = require './PathConstants'
 { v4: uuidV4 } = require 'uuid'
 OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
 Util = require './Util'
+HttpRequester = require './HttpRequester'
+COVER_REQUESTER = new HttpRequester 'https://assets.ppy.sh/beatmaps/%s/covers/cover.jpg', config.get('osu-api.timeout')
 
 CACHE_TIME = config.get 'cacheTimes.get_beatmaps'
 COVER_CACHE_DIR = PathConstants.coverCacheDir
@@ -46,17 +47,11 @@ grabCoverFromOsuServer = (beatmapSetId, done) ->
             return done null, DEFAULT_COVER
 
     # cache didnt exist, lets get it
-    url = "https://assets.ppy.sh/beatmaps/#{beatmapSetId}/covers/cover.jpg"
-
-    req = request.get url
-    await
-        reqDone = defer err, res
-        req.once 'response', (res) -> reqDone null, res
-        req.once 'error', (err) -> reqDone err
+    localLocation = path.resolve COVER_CACHE_DIR, beatmapSetId + '.jpg'
+    await COVER_REQUESTER.saveFile [beatmapSetId], localLocation, defer err, success, url
     return done err if err
 
-    localLocation = path.resolve COVER_CACHE_DIR, beatmapSetId + '.jpg'
-    if res.statusCode isnt 200
+    if not success
         # not found, use default
         done null, DEFAULT_COVER
 
@@ -68,13 +63,6 @@ grabCoverFromOsuServer = (beatmapSetId, done) ->
         # bug with logger.error I get a direct message :D
         logger.error {beatmapSetId: beatmapSetId, url: url}, 'beatmap cover.jpg does not exist on osu server'
         return
-
-    pipe = req.pipe fs.createWriteStream localLocation
-    await
-        pipeDone = defer err
-        pipe.once 'finish', () -> pipeDone()
-        pipe.once 'error', (err) -> pipeDone err
-    return done err if err
 
     await Util.checkImageSize localLocation, OsuScoreBadgeCreator.IMAGE_WIDTH, OsuScoreBadgeCreator.IMAGE_HEIGHT, defer err, sizeOk
     return cb err if err

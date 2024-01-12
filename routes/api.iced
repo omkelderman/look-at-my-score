@@ -45,7 +45,7 @@ if config.get('discord.webhook.id')
 
         DiscordWebhookShooter.shoot webhookId, webhookSecret, webhook, (err, body) ->
             if err
-                logger.error {err: err, body: body}, 'Error while shooting discord new image webhook'
+                logger.error {err: err}, 'Error while shooting discord new image webhook'
             else
                 logger.info {id: body.id}, 'New image discord webhook success'
 else
