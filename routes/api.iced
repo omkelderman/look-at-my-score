@@ -329,6 +329,7 @@ router.get '/image-count-stream', (req, res, next) ->
 
     res.set 'Content-Type', 'text/event-stream'
     res.set 'Cache-Control', 'no-cache'
+    res.set 'X-Accel-Buffering', 'no' # disable nginx reverse proxy buffering
     res.set 'Connection', 'keep-alive'
 
     sendImageCountEvent = (newImagesAmount) ->
