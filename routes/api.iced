@@ -333,13 +333,15 @@ router.get '/image-count-stream', (req, res, next) ->
     res.set 'Connection', 'keep-alive'
 
     sendImageCountEvent = (newImagesAmount) ->
-        res.write 'event: image-count\n'
-        res.write 'data: ' + newImagesAmount + '\n\n'
+        res.write "event: image-count\ndata: #{newImagesAmount}\n\n"
+    
+    sendHeartbeatEvent = (count) ->
+        res.write "event: heartbeat\ndata: #{count}\n\n"
     
     sendImageCountEvent imagesAmount
     
-    OsuScoreBadgeCreator.registerImageCountEventHandler sendImageCountEvent
-    req.on 'close', () -> OsuScoreBadgeCreator.unregisterImageCountEventHandler sendImageCountEvent
+    OsuScoreBadgeCreator.registerImageCountEventHandler sendImageCountEvent, sendHeartbeatEvent
+    req.on 'close', () -> OsuScoreBadgeCreator.unregisterImageCountEventHandler sendImageCountEvent, sendHeartbeatEvent
 
 getDefaultFromSet = (set) ->
     prevMode = set[0].mode
