@@ -419,7 +419,7 @@ getGeneratedImagesAmountUncached = (cb) ->
 ImageCountEventEmitter = new EventEmitter()
 tryEmitNewImageCountEvent = () ->
     await getGeneratedImagesAmountUncached defer err, newImageCount
-    return logger.err {err: err}, 'failed to fetch image count from disk' if err
+    return logger.error {err: err}, 'failed to fetch image count from disk' if err
     ImageCountEventEmitter.emit('image-count', newImageCount)
 registerImageCountEventHandler = (handler) -> ImageCountEventEmitter.on('image-count', handler)
 unregisterImageCountEventHandler = (handler) -> ImageCountEventEmitter.off('image-count', handler)

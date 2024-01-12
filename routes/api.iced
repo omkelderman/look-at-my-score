@@ -394,7 +394,7 @@ preloadBeatmapCover = (beatmapSetId) ->
     # lets already *start* loading beatmap-cover since we know it'll be requested after this anyway
     CoverCache.grabCoverFromOsuServer beatmapSetId, (err, coverJpg) ->
         if err
-            logger.err {err: err}, 'preloading beatmap-cover failed'
+            logger.error {err: err}, 'preloading beatmap-cover failed'
         else
             logger.debug {coverJpg: coverJpg}, 'preloaded beatmap-cover'
 
