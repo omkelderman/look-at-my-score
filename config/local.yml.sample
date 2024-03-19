@@ -21,6 +21,3 @@ discord:
 
 # Maybe use a different domain for the actual images
 #image-result-url: "{protocol}://example.com/{image-id}.png"
-
-# Use another Google Analytics code, or set to false to disable
-gaCode: false
