@@ -36,14 +36,6 @@ html
 
         // Bootsrap plugins
         script(src='/js/bootstrap.min.js')
-
-        if gaCode
-            // Google Analytics
-            script.
-                window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-                ga('create', '#{gaCode}', 'auto');
-                ga('send', 'pageview');
-            script(async, src='https://www.google-analytics.com/analytics.js')
     body
         div#wrap
             .container

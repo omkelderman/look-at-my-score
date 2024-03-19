@@ -45,8 +45,6 @@ watermark:
     text: LookAtMySco.re
     underline-length: 88
 
-gaCode: UA-44234598-3
-
 log:
     dir: log
     level: info
