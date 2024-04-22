@@ -331,17 +331,17 @@ router.get '/image-count-stream', (req, res, next) ->
     res.set 'Cache-Control', 'no-cache'
     res.set 'X-Accel-Buffering', 'no' # disable nginx reverse proxy buffering
     res.set 'Connection', 'keep-alive'
+    res.flushHeaders()
 
-    sendImageCountEvent = (newImagesAmount) ->
-        res.write "event: image-count\ndata: #{newImagesAmount}\n\n"
-    
-    sendHeartbeatEvent = (count) ->
-        res.write "event: heartbeat\ndata: #{count}\n\n"
-    
+    id = 0
+    sendImageCountEvent = (newImagesAmount) -> res.write "id: #{id++}\nevent: image-count\ndata: #{newImagesAmount}\n\n"
+    sendHeartbeatEvent = () -> res.write ": heartbeat\n\n"    
     sendImageCountEvent imagesAmount
-    
-    OsuScoreBadgeCreator.registerImageCountEventHandler sendImageCountEvent, sendHeartbeatEvent
-    req.on 'close', () -> OsuScoreBadgeCreator.unregisterImageCountEventHandler sendImageCountEvent, sendHeartbeatEvent
+    heartbeatInterval = setInterval sendHeartbeatEvent, config.get 'eventStreamHeartbeatMs'
+    OsuScoreBadgeCreator.registerImageCountEventHandler sendImageCountEvent
+    req.on 'close', () ->
+        clearInterval heartbeatInterval
+        OsuScoreBadgeCreator.unregisterImageCountEventHandler sendImageCountEvent
 
 getDefaultFromSet = (set) ->
     prevMode = set[0].mode

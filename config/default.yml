@@ -24,6 +24,8 @@ http:
     # ignored if not using unix-socket or if value is falsy
     socketChmod: 0666
 
+eventStreamHeartbeatMs: 30000 # 30 seconds
+
 dirs:
     data: data
     coverCache: coverCache

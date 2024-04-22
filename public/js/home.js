@@ -97,13 +97,16 @@ function startImageCounterUpdate() {
     IMAGE_COUNT_EVENT_SOURCE = new EventSource('/api/image-count-stream');
     IMAGE_COUNT_EVENT_SOURCE.addEventListener('image-count', function(e) {
         $imageCount.text(e.data);
+        console.log('image count update', e.data);
     });
+    console.log('started image counter update');
 }
 
 function stopImageCounterUpdate() {
     if(IMAGE_COUNT_EVENT_SOURCE) {
         IMAGE_COUNT_EVENT_SOURCE.close();
         IMAGE_COUNT_EVENT_SOURCE = null;
+        console.log('stopped image counter update');
     }
 }
 
@@ -229,7 +232,6 @@ function doThaThing(data, frm) {
                 $resultImg.attr('src', imgSrc).show();
                 setImageResult(imgSrc);
                 $contactMe.attr('href', '/contact?img-id=' + data.image.id);
-                // incrementImageCounter();
                 fireGoogleAnalyticsEvent('submit-success', gaLabel);
             } else if (data.result === 'multiple-scores') {
                 hideResult();

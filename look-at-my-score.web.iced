@@ -106,8 +106,5 @@ else
 
 await RedisCache.close defer()
 
-# cleanup OsuScoreBadgeCreator
-OsuScoreBadgeCreator.cleanup()
-
 # THE END :D
 logger.info "process with pid #{process.pid} ended gracefully :D"

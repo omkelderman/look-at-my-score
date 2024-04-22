@@ -90,7 +90,6 @@ init = (cb) ->
     if not sizeOk
         return cb new Error("File '#{STAR_ICON}' does not have the correct size")
 
-    initEventEmitterHeartbeat()
     cb null
 
 addThousandSeparators = (number, character) ->
@@ -422,17 +421,8 @@ tryEmitNewImageCountEvent = () ->
     await getGeneratedImagesAmountUncached defer err, newImageCount
     return logger.error {err: err}, 'failed to fetch image count from disk' if err
     ImageCountEventEmitter.emit('image-count', newImageCount)
-registerImageCountEventHandler = (handler, heartbeatHandler) ->
-    ImageCountEventEmitter.on('image-count', handler)
-    ImageCountEventEmitter.on('heartbeat', heartbeatHandler)
-unregisterImageCountEventHandler = (handler, heartbeatHandler) ->
-    ImageCountEventEmitter.off('image-count', handler)
-    ImageCountEventEmitter.off('heartbeat', heartbeatHandler)
-
-HEARTBEAT_INTERVAL_ID = 0
-HEARTBEAT_COUNT = 0;
-initEventEmitterHeartbeat = -> HEARTBEAT_INTERVAL_ID = setInterval (-> ImageCountEventEmitter.emit('heartbeat', HEARTBEAT_COUNT++)), 5000
-cleanup = -> clearInterval(HEARTBEAT_INTERVAL_ID)
+registerImageCountEventHandler = (handler) -> ImageCountEventEmitter.on('image-count', handler)
+unregisterImageCountEventHandler = (handler) -> ImageCountEventEmitter.off('image-count', handler)
 
 module.exports =
     create: createOsuScoreBadge
@@ -441,7 +431,6 @@ module.exports =
     isValidBeatmapObj: isValidBeatmapObj
     isValidModAmount: isValidModAmount
     init: init
-    cleanup: cleanup
     IMAGE_WIDTH: IMAGE_WIDTH
     IMAGE_HEIGHT: IMAGE_HEIGHT
     tryEmitNewImageCountEvent: tryEmitNewImageCountEvent
