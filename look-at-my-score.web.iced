@@ -10,7 +10,7 @@ express = require 'express'
 fs = require 'fs'
 path = require 'path'
 morgan = require 'morgan'
-killable = require 'killable'
+httpTerminator = require 'http-terminator'
 config = require 'config'
 RedisCache = require './RedisCache'
 PathConstants = require './PathConstants'
@@ -79,7 +79,11 @@ await
         server = app.listen PathConstants.socket, defer()
     else
         server = app.listen config.get('http.listen'), config.get('http.host'), defer()
-killable server
+httpServerTerminator = httpTerminator.createHttpTerminator server:server
+terminateHttpServer = (cb) ->
+    yep = () -> cb null
+    nope = (err) -> cb err
+    httpServerTerminator.terminate().then yep, nope
 
 # set socket chmod if applicable
 if PathConstants.socket
@@ -98,7 +102,7 @@ process.on 'requestShutdown', ->
     logWhyRunning()
 
 # stop http-server
-await server.kill defer err
+await terminateHttpServer defer err
 if err
     logger.error {err: err}, 'Error while closing HTTP server'
 else
