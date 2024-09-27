@@ -10,7 +10,7 @@ OsuApi = require '../OsuApi'
 CoverCache = require '../CoverCache'
 OsuMods = require '../OsuMods'
 OsuAcc = require '../OsuAcc'
-{ v4: uuidV4 } = require 'uuid'
+crypto = require 'crypto'
 path = require 'path'
 fs = require 'fs'
 PathConstants = require '../PathConstants'
@@ -74,7 +74,7 @@ renderImageResponse = (req, res, next, coverJpg, beatmap, gameMode, score, isFro
     return handleSubmitError next, req, _.badRequest 'too many mods enabled, if this is a legit score, please contact me!' if not OsuScoreBadgeCreator.isValidModAmount +score.enabled_mods
 
     # create the thing :D
-    imageId = uuidV4()
+    imageId = crypto.randomUUID()
     createdDate = new Date()
     tmpPngLocation = path.resolve PathConstants.tmpDir, imageId + '.png'
 

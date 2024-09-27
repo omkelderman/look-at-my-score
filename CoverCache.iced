@@ -5,7 +5,7 @@ RedisCache = require './RedisCache'
 config = require 'config'
 PathConstants = require './PathConstants'
 {logger} = require './Logger'
-{ v4: uuidV4 } = require 'uuid'
+crypto = require 'crypto'
 OsuScoreBadgeCreator = require './OsuScoreBadgeCreator'
 Util = require './Util'
 HttpRequester = require './HttpRequester'
@@ -84,7 +84,7 @@ saveCustomCoverImg = (base64str, cb) ->
     if imageData.format isnt 'JPEG' or imageData.Geometry isnt '900x250'
         return cb null, null
 
-    imageId = uuidV4()
+    imageId = crypto.randomUUID()
     filepath = path.resolve COVER_CACHE_DIR, imageId
     await fs.writeFile filepath, data, defer err
     return cb err if err
