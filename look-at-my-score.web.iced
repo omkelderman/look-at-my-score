@@ -1,7 +1,7 @@
 logWhyRunning = require 'why-is-node-running'
 # NodeJS Version Check
 semver = require 'semver'
-NODE_VERSION_TO_RUN = '^20.11.0'
+NODE_VERSION_TO_RUN = '^22.15.1'
 throw new Error("The current node version #{process.version} does not satisfy the required version #{NODE_VERSION_TO_RUN}.") if not semver.satisfies(process.version, NODE_VERSION_TO_RUN)
 
 {logger} = require './Logger'
